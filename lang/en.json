@@ -1,0 +1,48 @@
+{
+  "langName": "English",
+  "dir": "ltr",
+
+  "title": "Fly Catcher",
+  "tagline": "Tap a fly to catch it with the net",
+  "kidsBtn": "🪰 Let's play!",
+  "kidsSub": "Catch the flies",
+  "beesBtn": "🐝 Watch the bees",
+  "beesSub": "Catch flies, not bees",
+  "chBtn": "🏆 Challenge",
+  "chSub": "Points & timer",
+  "install": "📲 Install the game",
+  "iosHint": "To install: tap Share, then “Add to Home Screen”",
+  "silentHint": "🔕 No sound? Make sure your device isn't on silent",
+
+  "level": "Level",
+  "levelN": "Level {n}",
+  "points": "Points",
+  "streak": "Streak",
+  "caughtAria": "Flies caught",
+  "mute": "Mute",
+  "unmute": "Unmute",
+  "pauseAria": "Pause",
+
+  "cheers": ["", "Great!", "Excellent!", "Wow!", "Final level!"],
+  "combo": { "2": "Double catch!", "3": "Triple!", "4": "Four! Amazing!", "5": "Five! Champion!" },
+  "plusSec": "+{n} seconds",
+  "thatsBee": "That's a bee!",
+
+  "paused": "Paused",
+  "resume": "▶ Resume",
+  "wellDone": "Well done!",
+  "allCaught": "You caught all the flies",
+  "again": "Play again",
+  "back": "Back to start",
+
+  "chDone": "Challenge complete!",
+  "timeUp": "Time's up!",
+  "newRecord": "New record! 🎉",
+  "firstRecord": "Your first record! 🎉",
+  "best": "Best: {n}",
+  "acc": "Accuracy",
+  "pct": "{n}%",
+  "bestStreak": "Best streak",
+  "reached": "Level reached",
+  "bonus": "Time bonus"
+}

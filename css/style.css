@@ -1,0 +1,399 @@
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+
+  --sky-top:#7CC8F7; --sky-bot:#DFF4FF;
+  --sun:#FFD54A; --sun-glow:rgba(255,213,74,.42);
+  --cloud:#FFFFFF;
+  --hill-far:#9ED98B; --hill-near:#6CC26A;
+  --tree:#3F9B53; --trunk:#8A5A3B;
+  --wood-light:#D9985A; --wood:#B9773F; --wood-dark:#8A5327;
+  --panel:#FFFAF0; --panel-a:rgba(255,250,240,.9);
+  --ink:#3A2A1F; --ink-soft:#6B5646;
+  --net:#FF7A3D; --net-soft:#FFB07A;
+  --good:#45C46B; --good-dark:#2F9A4F;
+  --star:#FFC93C; --star-empty:rgba(58,42,31,.18);
+  --streak:rgba(255,255,255,.24);
+  --halo:rgba(255,236,160,.55);
+  --tile:rgba(58,42,31,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky-top:#1D2A5B; --sky-bot:#5A4A8A;
+    --sun:#F3F0D8; --sun-glow:rgba(243,240,216,.22);
+    --cloud:rgba(255,255,255,.34);
+    --hill-far:#2F5B4A; --hill-near:#264A3C;
+    --tree:#1F4A33; --trunk:#4A3322;
+    --wood-light:#8A5A33; --wood:#6E4526; --wood-dark:#4A2C16;
+    --panel:#2A2238; --panel-a:rgba(42,34,56,.9);
+    --ink:#FFF4E6; --ink-soft:#D9C9B8;
+    --star-empty:rgba(255,244,230,.22);
+    --streak:rgba(255,255,255,.1);
+    --halo:rgba(226,234,255,.32);
+    --tile:rgba(255,244,230,.08);
+  }
+}
+:root[data-theme="dark"]{
+  --sky-top:#1D2A5B; --sky-bot:#5A4A8A;
+  --sun:#F3F0D8; --sun-glow:rgba(243,240,216,.22);
+  --cloud:rgba(255,255,255,.34);
+  --hill-far:#2F5B4A; --hill-near:#264A3C;
+  --tree:#1F4A33; --trunk:#4A3322;
+  --wood-light:#8A5A33; --wood:#6E4526; --wood-dark:#4A2C16;
+  --panel:#2A2238; --panel-a:rgba(42,34,56,.9);
+  --ink:#FFF4E6; --ink-soft:#D9C9B8;
+  --star-empty:rgba(255,244,230,.22);
+  --streak:rgba(255,255,255,.1);
+  --halo:rgba(226,234,255,.32);
+  --tile:rgba(255,244,230,.08);
+}
+
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);background:var(--wood-dark)}
+body{
+  margin:0;height:100%;overflow:hidden;
+  background:var(--wood-dark);color:var(--ink);
+  font-family:"Baloo Bhaijaan 2","Noto Kufi Arabic","Segoe UI",Tahoma,sans-serif;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+}
+/* Hide text UI until the language file loads */
+html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
+
+/* ================= Window frame ================= */
+.frame{
+  height:100%;padding:clamp(8px,2.2vmin,18px);
+  background:linear-gradient(135deg,var(--wood-light),var(--wood) 42%,var(--wood-dark));
+}
+.glass{
+  position:relative;height:100%;overflow:hidden;touch-action:none;
+  border-radius:clamp(10px,2vmin,18px);
+  background:linear-gradient(var(--sky-top),var(--sky-bot));
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.18),inset 0 10px 26px rgba(0,0,0,.24);
+}
+
+/* Scenery behind the glass */
+.outside{position:absolute;inset:0;pointer-events:none;filter:blur(1.4px) saturate(1.05)}
+.sun{
+  position:absolute;top:11%;left:9%;width:clamp(66px,15vmin,140px);aspect-ratio:1;border-radius:50%;
+  background:var(--sun);box-shadow:0 0 0 14px var(--sun-glow),0 0 70px 30px var(--sun-glow);
+}
+.cloud{
+  position:absolute;left:0;height:clamp(26px,6vmin,46px);border-radius:999px;background:var(--cloud);
+  animation:drift linear infinite;
+}
+.cloud::before,.cloud::after{content:"";position:absolute;border-radius:50%;background:var(--cloud)}
+.cloud::before{width:48%;aspect-ratio:1;left:14%;bottom:30%}
+.cloud::after{width:36%;aspect-ratio:1;right:16%;bottom:24%}
+.c1{top:16%;width:clamp(110px,24vmin,200px);animation-duration:90s;animation-delay:-20s}
+.c2{top:30%;width:clamp(80px,17vmin,150px);animation-duration:120s;animation-delay:-70s;opacity:.85}
+@keyframes drift{from{transform:translateX(-110%)}to{transform:translateX(calc(100vw + 10%))}}
+.hill{position:absolute;border-radius:50%}
+.h1{width:150%;height:62%;left:-40%;bottom:-32%;background:var(--hill-far)}
+.h2{width:130%;height:52%;right:-45%;bottom:-30%;background:var(--hill-near)}
+.tree{position:absolute;right:12%;bottom:18%;width:clamp(70px,15vmin,130px);aspect-ratio:.8}
+.tree .trunk{position:absolute;left:44%;bottom:0;width:12%;height:42%;background:var(--trunk);border-radius:4px}
+.tree .top{position:absolute;inset:0 0 30% 0;border-radius:50%;background:var(--tree)}
+.flower{position:absolute;width:clamp(8px,1.6vmin,14px);aspect-ratio:1;border-radius:50%;background:var(--c)}
+
+/* A cloud over the sun dims the scenery, not the insects */
+.halo{position:absolute;pointer-events:none;border-radius:50%;left:0;top:0;
+  background:radial-gradient(circle,var(--halo) 0%,transparent 68%);transition:opacity .35s linear}
+.shade{position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(rgb(30,45,85),rgb(45,60,95));transition:opacity .35s linear}
+.streaks{transition:opacity .35s linear;
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(115deg,transparent 17%,var(--streak) 18%,var(--streak) 22%,transparent 23%,
+                    transparent 28%,var(--streak) 29%,transparent 30.5%),
+    linear-gradient(115deg,transparent 61%,var(--streak) 62%,var(--streak) 63.5%,transparent 64.5%);
+}
+
+.layer,.fx,.flora{position:absolute;inset:0;pointer-events:none}
+.bflower{position:absolute;left:0;top:0;transform-origin:50% 100%;animation:bloom .7s cubic-bezier(.2,1.5,.4,1) both}
+.bflower svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 5px rgba(0,0,0,.18))}
+.bflower.wilt{animation:wilt .6s ease-in forwards}
+@keyframes bloom{from{transform:scale(0) rotate(-12deg);opacity:.2}to{transform:scale(1) rotate(0);opacity:1}}
+@keyframes wilt{to{transform:scale(0) rotate(10deg);opacity:0}}
+.fx{z-index:3}
+
+/* ================= Fly ================= */
+.fly{position:absolute;left:0;top:0;width:var(--fly,70px);height:var(--fly,70px);will-change:transform}
+.fly .body{width:100%;height:100%;will-change:transform;
+  filter:drop-shadow(0 calc(var(--fly,70px)*.09) calc(var(--fly,70px)*.06) rgba(0,0,0,var(--sha,.28)))}
+.fly svg,.hero svg,.mini svg{width:100%;height:100%;display:block;overflow:visible}
+.wing{transform-origin:50px 44px}
+.flying .wl{animation:flapL .05s linear infinite alternate}
+.flying .wr{animation:flapR .05s linear infinite alternate}
+@keyframes flapL{from{transform:rotate(-6deg);opacity:.95}to{transform:rotate(-56deg);opacity:.5}}
+@keyframes flapR{from{transform:rotate(6deg);opacity:.95}to{transform:rotate(56deg);opacity:.5}}
+
+.fly.caught svg{animation:squash .46s cubic-bezier(.3,1.7,.5,1)}
+.fly.dodge svg{animation:dodge .4s ease-out}
+
+/* Bee-hit alert: shaking ✕ badge and glowing red edges */
+.bee-alert{position:absolute;z-index:6;left:0;top:0;transform:translate(-50%,-50%);
+  pointer-events:none;text-align:center;animation:alertIn 1.4s cubic-bezier(.2,1.4,.4,1) forwards}
+.bee-alert svg{width:clamp(72px,16vmin,112px);height:auto;display:block;margin:0 auto;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+.bee-alert span{display:inline-block;margin-top:6px;background:#fff;color:#C2332E;font-weight:800;
+  font-size:clamp(18px,4.6vmin,26px);padding:2px 16px 6px;border-radius:999px;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+@keyframes alertIn{
+  0%  {opacity:0;transform:translate(-50%,-50%) scale(.3)}
+  12% {opacity:1;transform:translate(-50%,-50%) scale(1.15)}
+  20% {transform:translate(-50%,-50%) scale(1) rotate(-10deg)}
+  30% {transform:translate(-50%,-50%) rotate(10deg)}
+  40% {transform:translate(-50%,-50%) rotate(-7deg)}
+  50% {transform:translate(-50%,-50%) rotate(4deg)}
+  58% {transform:translate(-50%,-50%) rotate(0)}
+  82% {opacity:1}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}
+}
+.glass::after{content:"";position:absolute;inset:0;z-index:9;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 0 0 rgba(255,90,90,0);transition:box-shadow .55s ease-out}
+.glass.warn::after{box-shadow:inset 0 0 70px 20px rgba(255,90,90,.42);transition:box-shadow .08s ease-out}
+@keyframes dodge{
+  0%{transform:scale(1)} 20%{transform:scale(1.25) rotate(-14deg)}
+  45%{transform:scale(.92) rotate(10deg)} 70%{transform:rotate(-6deg)} 100%{transform:scale(1)}
+}
+@keyframes squash{
+  0%{transform:scale(1)}
+  30%{transform:scale(1.22,.78)}
+  55%{transform:scale(.9,1.12) rotate(-6deg)}
+  75%{transform:scale(1.04,.97) rotate(4deg)}
+  100%{transform:scale(1)}
+}
+
+/* Dizzy stars */
+.dizzy{position:absolute;left:50%;top:18%;width:0;height:0;opacity:0;transition:opacity .2s}
+.fly.dizzy-on .dizzy{opacity:1}
+.dizzy i{
+  position:absolute;left:calc(var(--fly,70px)*-.12);top:calc(var(--fly,70px)*-.12);
+  width:calc(var(--fly,70px)*.24);aspect-ratio:1;background:var(--star);
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  animation:orbit .9s linear infinite;
+}
+.dizzy i:nth-child(2){animation-delay:-.3s}
+.dizzy i:nth-child(3){animation-delay:-.6s}
+@keyframes orbit{
+  0%  {transform:translate(0,calc(var(--fly,70px)*-.16)) scale(1)}
+  25% {transform:translate(calc(var(--fly,70px)*.3),0) scale(.72)}
+  50% {transform:translate(0,calc(var(--fly,70px)*.16)) scale(.5)}
+  75% {transform:translate(calc(var(--fly,70px)*-.3),0) scale(.72)}
+  100%{transform:translate(0,calc(var(--fly,70px)*-.16)) scale(1)}
+}
+
+/* ================= Net and effects ================= */
+.net{position:absolute;left:0;top:0;transform-origin:40% 40%;will-change:transform,opacity}
+.net svg{width:100%;height:100%;display:block;overflow:visible}
+.cursor-net{opacity:.9;transition:opacity .12s}
+.cursor-net.away{opacity:0}
+/* Toggled by real mouse movement, not device type, so touch laptops work */
+.glass.aiming{cursor:none}
+
+.ring{position:absolute;width:var(--fly,70px);height:var(--fly,70px);
+  margin:calc(var(--fly,70px)*-.5) 0 0 calc(var(--fly,70px)*-.5);
+  border-radius:50%;border:4px solid #fff;animation:ring .5s ease-out forwards}
+@keyframes ring{from{transform:scale(.3);opacity:.95}to{transform:scale(1.8);opacity:0}}
+.spark{position:absolute;width:calc(var(--fly,70px)*.28);height:calc(var(--fly,70px)*.28);
+  margin:calc(var(--fly,70px)*-.14) 0 0 calc(var(--fly,70px)*-.14);background:var(--c);
+  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  animation:spark .7s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes spark{
+  from{transform:translate(0,0) scale(.3) rotate(0);opacity:1}
+  to{transform:translate(var(--dx),var(--dy)) scale(1) rotate(170deg);opacity:0}
+}
+
+.spark.big{animation-duration:.9s}
+.combo{
+  position:absolute;z-index:4;transform:translate(-50%,-50%);text-align:center;
+  pointer-events:none;white-space:nowrap;color:#fff;
+  text-shadow:0 3px 0 #FF7A3D,0 0 18px rgba(255,122,61,.55);
+  animation:combo 1.5s cubic-bezier(.2,1.4,.4,1) forwards;
+}
+.combo b{display:block;font-weight:800;font-size:clamp(46px,13vmin,84px);line-height:1}
+.combo span{display:block;font-weight:800;font-size:clamp(22px,6vmin,36px);line-height:1.2}
+@keyframes combo{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg)}
+  16%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(4deg)}
+  28%{transform:translate(-50%,-50%) scale(1) rotate(0)}
+  78%{opacity:1;transform:translate(-50%,-80%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-120%) scale(.9)}
+}
+
+/* ================= HUD ================= */
+.hud{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:clamp(8px,2vmin,14px);pointer-events:none;
+}
+.hud > *{pointer-events:auto}
+.hud{flex-wrap:wrap}
+.cstats{display:none;flex-basis:100%;justify-content:center;gap:8px}
+body.challenge .cstats{display:flex}
+.cstat{display:flex;align-items:baseline;gap:6px;padding:4px 14px 6px;font-weight:600;
+  font-size:clamp(14px,3.4vmin,19px);white-space:nowrap}
+.cstat b{font-weight:800;font-size:1.3em;font-variant-numeric:tabular-nums}
+.cstat.low{background:#FF5A5A;color:#fff;animation:beat .5s ease-in-out infinite alternate}
+.cstat.hot b{color:var(--net)}
+@keyframes beat{to{transform:scale(1.08)}}
+.pts{position:absolute;z-index:4;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;
+  font-weight:800;font-size:clamp(22px,6vmin,34px);color:#fff;
+  text-shadow:0 2px 0 rgba(0,0,0,.28),0 0 10px rgba(0,0,0,.22);animation:ptsUp 1s ease-out forwards}
+@keyframes ptsUp{
+  0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}
+  15%{opacity:1;transform:translate(-50%,-60%) scale(1.1)}
+  100%{opacity:0;transform:translate(-50%,-190%) scale(1)}
+}
+.b-time{font-weight:800;font-size:clamp(18px,4.6vmin,26px);color:var(--good-dark);margin-top:2px}
+.pill{
+  background:var(--panel-a);color:var(--ink);border-radius:999px;
+  box-shadow:0 4px 0 rgba(0,0,0,.12);
+}
+.level{display:flex;align-items:baseline;gap:6px;padding:4px 14px 6px;font-weight:600;
+  font-size:clamp(14px,3.4vmin,19px);white-space:nowrap}
+.level b{font-weight:800;font-size:1.35em;line-height:1}
+.stars{display:flex;gap:clamp(2px,.7vmin,5px);padding:7px 12px;flex-wrap:wrap;justify-content:center;min-width:0}
+.star{width:clamp(14px,3.6vmin,28px);aspect-ratio:1}
+.stars.many .star{width:clamp(11px,2.7vmin,22px)}
+.star svg{width:100%;height:100%;display:block;fill:var(--star-empty)}
+.star.on svg{fill:var(--star)}
+.star.pop svg{animation:starPop .5s cubic-bezier(.2,1.9,.4,1)}
+@keyframes starPop{0%{transform:scale(.3)}60%{transform:scale(1.45)}100%{transform:scale(1)}}
+.hud-btns{display:flex;gap:8px;align-items:center}
+#pauseScreen .modes{margin-top:18px}
+.hud .pausebtn{display:none}   /* Must outrank the .mute display rule below */
+body.playing .hud .pausebtn{display:grid}
+/* Pause: freeze every scene animation except the pause screen */
+.glass.paused .outside *, .glass.paused .layer *, .glass.paused .fx *,
+.glass.paused .flora *, .glass.paused .banner *{animation-play-state:paused !important}
+.mute{width:clamp(40px,8vmin,48px);aspect-ratio:1;border:0;padding:0;cursor:pointer;
+  display:grid;place-items:center;color:var(--ink)}
+.mute svg{width:56%;height:56%;overflow:visible}
+/* Press feedback: squash, bounce and a ring */
+.mute{position:relative;transition:transform .12s ease,box-shadow .12s ease,color .2s,opacity .2s}
+.mute:active{transform:scale(.86) translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.12)}
+.mute.pop{animation:mpop .4s cubic-bezier(.2,1.6,.4,1)}
+@keyframes mpop{0%{transform:scale(.84)}55%{transform:scale(1.16)}100%{transform:scale(1)}}
+.mute::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:3px solid var(--net);
+  opacity:0;pointer-events:none}
+.mute.pop::after{animation:mring .5s ease-out}
+@keyframes mring{from{opacity:.85;transform:scale(.8)}to{opacity:0;transform:scale(1.7)}}
+/* Waves collapse one by one, the cross draws stroke by stroke */
+.mute .waves path{transform-box:fill-box;transform-origin:left center;
+  transition:opacity .2s ease,transform .3s cubic-bezier(.2,1.6,.4,1)}
+.mute .waves path:nth-child(2){transition-delay:.06s}
+.mute.off .waves path{opacity:0;transform:scale(.3)}
+.mute .cross path{stroke-dasharray:8;stroke-dashoffset:8;transition:stroke-dashoffset .22s ease}
+.mute.off .cross path{stroke-dashoffset:0}
+.mute.off .cross path:nth-child(2){transition-delay:.09s}
+.mute.off{color:var(--ink-soft)}
+.mute:focus-visible,.big:focus-visible{outline:4px solid var(--net);outline-offset:4px}
+
+/* ================= Level banner ================= */
+.banner{position:absolute;inset:0;z-index:12;display:grid;place-items:center;pointer-events:none}
+.banner .inner{
+  text-align:center;background:var(--panel-a);color:var(--ink);
+  padding:14px 30px 18px;border-radius:30px;opacity:0;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+.banner.show .inner{animation:bannerPop 2s cubic-bezier(.2,1.3,.4,1) forwards}
+@keyframes bannerPop{
+  0%{opacity:0;transform:scale(.5)}
+  14%{opacity:1;transform:scale(1.06)}
+  22%{transform:scale(1)}
+  82%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:scale(.9) translateY(-20px)}
+}
+.b-title{font-weight:800;font-size:clamp(32px,9vmin,58px);line-height:1.1}
+.b-flies{display:flex;justify-content:center;gap:6px;margin:6px 0 2px}
+.mini{width:clamp(30px,7vmin,46px);aspect-ratio:1}
+.b-sub{font-weight:600;font-size:clamp(16px,4vmin,22px);color:var(--ink-soft)}
+
+/* ================= Screens ================= */
+.overlay{
+  position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:16px;
+  background:rgba(20,30,50,.26);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;cursor:auto;overflow:hidden;
+}
+.overlay{pointer-events:none}
+.overlay.show{opacity:1;visibility:visible;pointer-events:auto}
+.card{
+  position:relative;z-index:1;background:var(--panel);color:var(--ink);
+  border-radius:28px;padding:clamp(20px,5vmin,40px);text-align:center;width:min(92%,440px);
+  box-shadow:0 18px 50px rgba(0,0,0,.25),0 6px 0 rgba(0,0,0,.08);
+}
+.card h1,.card h2{font-weight:800;margin:.1em 0 .05em;line-height:1.15}
+.card h1{font-size:clamp(36px,9vmin,58px)}
+.card h2{font-size:clamp(32px,8vmin,50px)}
+.card p{margin:0 0 1em;font-size:clamp(17px,4vmin,22px);color:var(--ink-soft);line-height:1.5}
+.hero{position:relative;width:clamp(90px,24vmin,140px);aspect-ratio:1;margin:0 auto .2em;
+  animation:hover 3.2s ease-in-out infinite}
+@keyframes hover{
+  0%,100%{transform:translate(-14px,0) rotate(-14deg)}
+  25%{transform:translate(0,-10px) rotate(6deg)}
+  50%{transform:translate(14px,0) rotate(16deg)}
+  75%{transform:translate(0,8px) rotate(-4deg)}
+}
+.trophy{font-size:clamp(54px,14vmin,90px);line-height:1}
+.big{
+  font:inherit;font-weight:800;font-size:clamp(22px,5.5vmin,32px);color:#fff;
+  background:var(--good);border:0;border-radius:999px;padding:.45em 1.6em .6em;
+  box-shadow:0 6px 0 var(--good-dark);cursor:pointer;
+}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--good-dark)}
+.big small{display:block;font-size:.5em;font-weight:600;opacity:.88;line-height:1.3}
+.card{position:relative}
+.lang{position:absolute;top:12px;inset-inline-end:12px;border:2px solid var(--star-empty);background:transparent;
+  color:var(--ink-soft);font:inherit;font-weight:700;font-size:14px;border-radius:999px;padding:3px 12px 5px;cursor:pointer}
+.lang:focus-visible{outline:3px solid var(--net);outline-offset:3px}
+.install{display:block;margin:12px auto 0;font:inherit;font-weight:800;font-size:clamp(15px,3.8vmin,18px);
+  color:#fff;background:var(--net);border:0;border-radius:999px;padding:.3em 1.2em .45em;cursor:pointer;
+  box-shadow:0 4px 0 #D9571C}
+.install:active{transform:translateY(3px);box-shadow:0 1px 0 #D9571C}
+.install:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.install[hidden],.ios-hint[hidden]{display:none}
+.card .ios-hint{margin:8px 0 0;font-size:13px;font-weight:600;color:var(--ink-soft);line-height:1.45}   /* Outranks .card p */
+.card .ios-hint + .ios-hint{margin-top:4px}
+.ver{margin:1em 0 0;font-size:12px;font-weight:600;color:var(--ink-soft);opacity:.55;letter-spacing:.5px}
+/* Kids mode buttons stacked at equal size */
+.modes{display:flex;flex-direction:column;align-items:stretch;gap:14px;width:min(100%,320px);margin:0 auto}
+.modes .big{padding:.4em .8em .55em}
+.big.bee{background:#FFC93C;color:#3A2A1F;box-shadow:0 6px 0 #D9951A}
+.big.bee:active{box-shadow:0 2px 0 #D9951A}
+/* Auto-restart fill grows in reading direction; animating width keeps the edge rounded */
+.big.auto{position:relative;overflow:hidden;isolation:isolate}
+.big.auto::before{
+  content:"";position:absolute;top:0;bottom:0;inset-inline-start:0;width:0;z-index:-1;
+  border-radius:999px;background:rgba(255,255,255,.36);
+  animation:fillup 10s linear forwards;
+}
+@keyframes fillup{to{width:100%}}
+
+.alt{
+  display:block;margin:14px auto 0;font:inherit;font-weight:800;font-size:clamp(16px,4vmin,20px);
+  color:var(--ink);background:transparent;border:2.5px solid var(--star-empty);border-radius:999px;
+  padding:.3em 1.3em .45em;cursor:pointer;line-height:1.35;
+}
+.alt small{display:block;font-weight:600;font-size:.72em;color:var(--ink-soft)}
+.alt:active{transform:translateY(2px)}
+.alt:focus-visible{outline:4px solid var(--net);outline-offset:4px}
+
+/* Challenge end screen */
+.score-big{font-weight:800;font-size:clamp(46px,13vmin,78px);line-height:1;margin:.12em 0}
+.best{font-weight:700;font-size:clamp(16px,4vmin,21px);color:var(--ink-soft);margin:0 0 .7em}
+.best.new{color:var(--net);animation:beat .45s ease-in-out infinite alternate}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0 0 1.1em}
+.grid div{background:var(--tile);border-radius:16px;padding:8px 6px 9px}
+.grid b{display:block;font-weight:800;font-size:clamp(20px,5vmin,28px);line-height:1.15}
+.grid span{font-size:clamp(13px,3.2vmin,15px);color:var(--ink-soft);font-weight:600}
+
+.confetti{position:absolute;top:-4%;width:10px;height:14px;border-radius:2px;background:var(--c);
+  animation:fall var(--d) cubic-bezier(.3,.5,.6,1) forwards;pointer-events:none}
+@keyframes fall{to{transform:translate(var(--x),112vh) rotate(var(--r))}}
+
+@media (prefers-reduced-motion:reduce){
+  .cloud,.hero{animation:none}
+  .confetti{display:none}
+}

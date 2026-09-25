@@ -1,13 +1,15 @@
-/* صيد الذباب — التشغيل بلا إنترنت
-   ⚠️ مع كل إصدار جديد للعبة: غيّر الرقم هون كمان (نفس VERSION بـ index.html)،
-   وإلا الأجهزة اللي ثبّتت اللعبة بتضل على النسخة القديمة. */
-const VERSION = "1.14.1";
+// Offline support; keep VERSION in sync with js/game.js, or installed apps stay on the old version
+const VERSION = "1.14.2";
 const CACHE = "fly-catch-" + VERSION;
-const FONTS = "fly-catch-fonts";          // الخط بيضل محفوظ بين الإصدارات
+const FONTS = "fly-catch-fonts";          // kept across versions
 
 const CORE = [
   "./",
   "./index.html",
+  "./css/style.css",
+  "./js/game.js",
+  "./lang/ar.json",
+  "./lang/en.json",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -15,12 +17,12 @@ const CORE = [
   "./icons/apple-touch-icon.png",
 ];
 
-// التثبيت: نخزّن اللعبة كاملة
+// Install: cache the whole game
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
 
-// التفعيل: نمسح نسخ الإصدارات القديمة
+// Activate: delete caches from old versions
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
@@ -34,7 +36,7 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // الخط من جوجل: أول مرة من النت، وبعدها من الجهاز دائماً
+  // Google Fonts: network the first time, then always from cache
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
     e.respondWith(
       caches.open(FONTS).then(c => c.match(req).then(hit => hit || fetch(req).then(res => {
@@ -47,7 +49,7 @@ self.addEventListener("fetch", e => {
 
   if (url.origin !== location.origin) return;
 
-  // ملفات اللعبة: من الجهاز فوراً (بتشتغل بلا نت)، وبنحدّثها بالخلفية إذا في نت
+  // Game files: serve from cache instantly (works offline), refresh in the background when online
   e.respondWith(
     caches.open(CACHE).then(c =>
       c.match(req, { ignoreSearch: true }).then(hit => {
