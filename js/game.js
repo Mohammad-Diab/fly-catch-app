@@ -161,10 +161,10 @@
   function measure() {
     const r = glass.getBoundingClientRect();
     W = r.width; H = r.height; MIN = Math.min(W, H);
-    S = clamp(MIN * 0.15, 58, 100);
-    NET_R = clamp(MIN * 0.12, 50, 86);
+    S = clamp(MIN * 0.15, 58, Math.max(100, MIN * 0.09));   // caps only grow on very large screens
+    NET_R = clamp(MIN * 0.12, 50, Math.max(86, MIN * 0.078));
     if (isCh()) NET_R = Math.max(40, NET_R * CH.net);
-    TOP_PAD = hud.offsetHeight + 12;
+    TOP_PAD = hud.getBoundingClientRect().height + 12;   // includes CSS zoom on large screens
     glass.style.setProperty("--fly", S + "px");
     sizeNet(cursorNet);
   }

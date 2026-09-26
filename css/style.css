@@ -233,8 +233,8 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 .hud .level{grid-area:level;justify-self:start}
 .hud .stars{grid-area:stars;justify-self:center}
 .hud .hud-btns{grid-area:btns;justify-self:end}
-/* Small screens: level and buttons on the first row, progress on its own row */
-@media (max-width:900px){
+/* Narrow or portrait screens: level and buttons on the first row, progress on its own row */
+@media (max-aspect-ratio:6/5),(max-width:540px){
   .hud{grid-template-areas:"level . btns" "stars stars stars"}
   .hud .stars{justify-self:stretch}
 }
@@ -329,8 +329,9 @@ body.playing .hud .pausebtn{display:grid}
 .overlay.show{opacity:1;visibility:visible;pointer-events:auto}
 .card{
   position:relative;z-index:1;background:var(--panel);color:var(--ink);
-  border-radius:28px;padding:clamp(20px,5vmin,40px);text-align:center;width:min(92%,440px);
+  border-radius:28px;padding:clamp(20px,5vmin,40px);text-align:center;width:min(92%,480px);
   box-shadow:0 18px 50px rgba(0,0,0,.25),0 6px 0 rgba(0,0,0,.08);
+  max-height:100%;overflow:hidden auto;overscroll-behavior:contain;touch-action:pan-y;   /* scrolls only if it still can't fit */
 }
 .card h1,.card h2{font-weight:800;margin:.1em 0 .05em;line-height:1.15}
 .card h1{font-size:clamp(36px,9vmin,58px)}
@@ -366,7 +367,7 @@ body.playing .hud .pausebtn{display:grid}
 .card .ios-hint + .ios-hint{margin-top:4px}
 .ver{margin:1em 0 0;font-size:12px;font-weight:600;color:var(--ink-soft);opacity:.55;letter-spacing:.5px}
 /* Kids mode buttons stacked at equal size */
-.modes{display:flex;flex-direction:column;align-items:stretch;gap:14px;width:min(100%,320px);margin:0 auto}
+.modes{display:flex;flex-direction:column;align-items:stretch;gap:14px;width:min(100%,400px);margin:0 auto}
 .modes .big{padding:.4em .8em .55em}
 .big.bee{background:#FFC93C;color:#3A2A1F;box-shadow:0 6px 0 #D9951A}
 .big.bee:active{box-shadow:0 2px 0 #D9951A}
@@ -391,6 +392,7 @@ body.playing .hud .pausebtn{display:grid}
 /* Challenge end screen */
 .score-big{font-weight:800;font-size:clamp(46px,13vmin,78px);line-height:1;margin:.12em 0}
 .best{font-weight:700;font-size:clamp(16px,4vmin,21px);color:var(--ink-soft);margin:0 0 .7em}
+#chTitle{font-size:clamp(22px,6.5vmin,40px)}
 .best.new{color:var(--net);animation:beat .45s ease-in-out infinite alternate}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0 0 1.1em}
 .grid div{background:var(--tile);border-radius:16px;padding:8px 6px 9px}
@@ -400,6 +402,44 @@ body.playing .hud .pausebtn{display:grid}
 .confetti{position:absolute;top:-4%;width:10px;height:14px;border-radius:2px;background:var(--c);
   animation:fall var(--d) cubic-bezier(.3,.5,.6,1) forwards;pointer-events:none}
 @keyframes fall{to{transform:translate(var(--x),112vh) rotate(var(--r))}}
+
+/* Landscape screens too short for a stacked card: intro beside the actions */
+@media (orientation:landscape) and (max-height:820px){
+  .card.split{width:min(96%,860px);display:flex;align-items:center;gap:clamp(16px,4vw,40px);padding:clamp(14px,4vmin,28px)}
+  .card.split > .card-intro,.card.split > .card-actions{flex:1 1 0;min-width:0}
+  .card.split .lang{inset-inline-end:auto;inset-inline-start:12px}
+  .hero{width:clamp(64px,20vmin,120px)}
+  .card p{margin-bottom:.4em}
+  .modes{gap:10px}
+  .alt{margin-top:10px}
+  .grid{margin-bottom:.8em}
+  .ver{margin-top:.6em}
+}
+/* Very short screens, like small phones sideways */
+@media (orientation:landscape) and (max-height:420px){
+  .card.split{padding:12px 16px}
+  .card h1{font-size:30px}
+  .card h2{font-size:28px}
+  .big{font-size:20px}
+  .alt{font-size:15px;margin-top:8px}
+  .score-big{font-size:40px}
+  .best{margin-bottom:.4em}
+  .grid{gap:6px}
+  .grid div{padding:4px 6px 5px}
+  .grid b{font-size:18px}
+  .grid span{font-size:12px}
+  .grid{margin-bottom:.5em}
+  .ver{margin-top:.3em}
+  #chEnd .ver{display:none}
+}
+
+/* Large monitors: scale the UI up instead of leaving it at its max size */
+@media (min-width:1000px) and (min-height:1000px){
+  .hud,.card,.banner .inner{zoom:1.2}
+}
+@media (min-width:1300px) and (min-height:1300px){
+  .hud,.card,.banner .inner{zoom:1.5}
+}
 
 @media (prefers-reduced-motion:reduce){
   .cloud,.hero{animation:none}

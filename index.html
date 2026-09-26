@@ -70,31 +70,39 @@
     <div class="banner" id="banner" aria-live="polite"></div>
 
     <section class="overlay show" id="startScreen">
-      <div class="card">
+      <div class="card split">
         <button class="lang" id="langBtn" type="button"></button>
-        <div class="hero flying" id="heroFly"></div>
-        <h1 data-i18n="title"></h1>
-        <p data-i18n="tagline"></p>
-        <div class="modes">
-          <button class="big" id="startBtn"><span data-i18n="kidsBtn"></span><small data-i18n="kidsSub"></small></button>
-          <button class="big bee" id="beesBtn"><span data-i18n="beesBtn"></span><small data-i18n="beesSub"></small></button>
+        <div class="card-intro">
+          <div class="hero flying" id="heroFly"></div>
+          <h1 data-i18n="title"></h1>
+          <p data-i18n="tagline"></p>
         </div>
-        <button class="alt" id="challengeBtn"><span data-i18n="chBtn"></span><small data-i18n="chSub"></small></button>
-        <button class="install" id="installBtn" type="button" hidden data-i18n="install"></button>
-        <p class="ios-hint" id="iosHint" hidden data-i18n="iosHint"></p>
-        <p class="ios-hint" id="silentHint" hidden data-i18n="silentHint"></p>
-        <p class="ver" dir="ltr"></p>
+        <div class="card-actions">
+          <div class="modes">
+            <button class="big" id="startBtn"><span data-i18n="kidsBtn"></span><small data-i18n="kidsSub"></small></button>
+            <button class="big bee" id="beesBtn"><span data-i18n="beesBtn"></span><small data-i18n="beesSub"></small></button>
+          </div>
+          <button class="alt" id="challengeBtn"><span data-i18n="chBtn"></span><small data-i18n="chSub"></small></button>
+          <button class="install" id="installBtn" type="button" hidden data-i18n="install"></button>
+          <p class="ios-hint" id="iosHint" hidden data-i18n="iosHint"></p>
+          <p class="ios-hint" id="silentHint" hidden data-i18n="silentHint"></p>
+          <p class="ver" dir="ltr"></p>
+        </div>
       </div>
     </section>
 
     <section class="overlay" id="endScreen">
-      <div class="card">
-        <div class="trophy" aria-hidden="true">🏆</div>
-        <h2 data-i18n="wellDone"></h2>
-        <p data-i18n="allCaught"></p>
-        <button class="big" id="againBtn" data-i18n="again"></button>
-        <button class="alt" id="kidsMenu" data-i18n="back"></button>
-        <p class="ver" dir="ltr"></p>
+      <div class="card split">
+        <div class="card-intro">
+          <div class="trophy" aria-hidden="true">🏆</div>
+          <h2 data-i18n="wellDone"></h2>
+          <p data-i18n="allCaught"></p>
+        </div>
+        <div class="card-actions">
+          <button class="big" id="againBtn" data-i18n="again"></button>
+          <button class="alt" id="kidsMenu" data-i18n="back"></button>
+          <p class="ver" dir="ltr"></p>
+        </div>
       </div>
     </section>
 
@@ -109,19 +117,23 @@
     </section>
 
     <section class="overlay" id="chEnd">
-      <div class="card">
-        <h2 id="chTitle"></h2>
-        <div class="score-big" id="chScore">0</div>
-        <p class="best" id="chBest"></p>
-        <div class="grid">
-          <div><b id="chAcc">0%</b><span data-i18n="acc"></span></div>
-          <div><b id="chStreak">0</b><span data-i18n="bestStreak"></span></div>
-          <div><b id="chLevel">1</b><span data-i18n="reached"></span></div>
-          <div><b id="chBonus">0</b><span data-i18n="bonus"></span></div>
+      <div class="card split">
+        <div class="card-intro">
+          <h2 id="chTitle"></h2>
+          <div class="score-big" id="chScore">0</div>
+          <p class="best" id="chBest"></p>
         </div>
-        <button class="big" id="chAgain" data-i18n="again"></button>
-        <button class="alt" id="chMenu" data-i18n="back"></button>
-        <p class="ver" dir="ltr"></p>
+        <div class="card-actions">
+          <div class="grid">
+            <div><b id="chAcc">0%</b><span data-i18n="acc"></span></div>
+            <div><b id="chStreak">0</b><span data-i18n="bestStreak"></span></div>
+            <div><b id="chLevel">1</b><span data-i18n="reached"></span></div>
+            <div><b id="chBonus">0</b><span data-i18n="bonus"></span></div>
+          </div>
+          <button class="big" id="chAgain" data-i18n="again"></button>
+          <button class="alt" id="chMenu" data-i18n="back"></button>
+          <p class="ver" dir="ltr"></p>
+        </div>
       </div>
     </section>
   </main>
