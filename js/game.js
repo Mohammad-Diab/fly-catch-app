@@ -83,12 +83,21 @@
     <g class="cross"><path d="M17 9l5 6"/><path d="M22 9l-5 6"/></g></svg>`;
 
   // ================= Levels =================
+  // Kids and bees modes, each level one even step harder; speed in px/s, rest = rests per second, restDur = rest length range (s)
   const LEVELS = [
-    { flies: 1, goal:  5, speed:  90, rest: .55 },
-    { flies: 2, goal:  8, speed: 125, rest: .45 },
-    { flies: 3, goal: 12, speed: 160, rest: .38 },
-    { flies: 4, goal: 16, speed: 195, rest: .30 },
-    { flies: 5, goal: 20, speed: 230, rest: .24 },
+    { flies: 1, goal:  5, speed:  90, rest: .55, restDur: [1.2, 2.2] },
+    { flies: 2, goal:  8, speed: 110, rest: .49, restDur: [1.15, 2.05] },
+    { flies: 3, goal: 11, speed: 130, rest: .43, restDur: [1.1, 1.9] },
+    { flies: 4, goal: 14, speed: 150, rest: .37, restDur: [1.05, 1.75] },
+    { flies: 5, goal: 17, speed: 170, rest: .31, restDur: [1, 1.6] },
+  ];
+  // Challenge keeps its own tuned curve, scaled further by CH below
+  const CH_LEVELS = [
+    { flies: 1, goal:  5, speed:  90, rest: .55, restDur: [1.2, 2.2] },
+    { flies: 2, goal:  8, speed: 125, rest: .45, restDur: [1.05, 2.05] },
+    { flies: 3, goal: 12, speed: 160, rest: .38, restDur: [.9, 1.9] },
+    { flies: 4, goal: 16, speed: 195, rest: .30, restDur: [.75, 1.75] },
+    { flies: 5, goal: 20, speed: 230, rest: .24, restDur: [.6, 1.6] },
   ];
   // ================= Languages =================
   // To add a language: create lang/<code>.json, then list the code here and in sw.js
@@ -128,7 +137,7 @@
     speed: .85,
     sip: [5.5, 6.5],   // about 6 seconds on the flower
   };
-  const FLY_LIFE = [25, 25];   // safety cap; flies normally leave after 2-3 rests
+  const FLY_LIFE = [25, 25];   // safety cap; flies normally leave after 3-4 rests
   const PETALS = ["#FF7AA8", "#B98CF0", "#FF9E5E", "#FF6B8A"];
   const flowerSVG = c => `<svg viewBox="0 0 100 120" aria-hidden="true">
     <path d="M50 58 Q47 88 50 118" stroke="#3F9B53" stroke-width="6" fill="none" stroke-linecap="round"/>
@@ -140,6 +149,7 @@
   const sizePts = sc => clamp(1 / sc, .85, 1.45);   // smaller fly is harder, so more points
   let MODE = "kids";
   const isCh = () => MODE === "challenge";
+  const LV = () => (isCh() ? CH_LEVELS : LEVELS)[level];
   const num = n => Math.round(n).toLocaleString("en-US");   // same Western digits in both languages
 
   // ================= Elements =================
@@ -380,13 +390,13 @@
     const fliesNow = flies.filter(f => !isBee(f) && isAlive(f)).length;
     const last = level === LEVELS.length - 1;
     // Last level: never spawn more flies than needed to win
-    if (last && fliesNow >= LEVELS[level].goal - caughtInLevel) return Math.random() < BEE.chance[level] ? "bee" : null;
+    if (last && fliesNow >= LV().goal - caughtInLevel) return Math.random() < BEE.chance[level] ? "bee" : null;
     // No two bees in a row while no flies are on screen
     if (lastKind === "bee" && fliesNow === 0) return "fly";
     return Math.random() < BEE.chance[level] ? "bee" : "fly";
   }
-  const baseSpeed = () => LEVELS[level].speed * clamp(MIN / 700, .62, 1.15) * (isCh() ? CH.speed : 1);
-  const restChance = () => LEVELS[level].rest * (isCh() ? CH.rest : 1);
+  const baseSpeed = () => LV().speed * clamp(MIN / 700, .62, 1.15) * (isCh() ? CH.speed : 1);
+  const restChance = () => LV().rest * (isCh() ? CH.rest : 1);
 
   // ================= Flies =================
   function spawnFly(kind = "fly") {
@@ -424,7 +434,7 @@
       kind, life: kind === "bee" ? BEE.life : rand(FLY_LIFE[0], FLY_LIFE[1]), exitK: 2, bump: 0,
       phase: kind === "bee" ? "go" : null, sip: false, flower,
       voice: sfx.voice(kind), vl: -1, vp: 9,
-      restsLeft: Math.random() < .5 ? 2 : 3,
+      restsLeft: Math.random() < .5 ? 3 : 4,
     });
   }
 
@@ -475,7 +485,7 @@
           if (f.y < b.minY) { f.y = b.minY; f.heading = -f.heading; f.target = f.heading; }
           if (f.y > b.maxY) { f.y = b.maxY; f.heading = -f.heading; f.target = f.heading; }
           if (!isBee(f) && Math.random() < dt * restChance()) {   // bees only rest on flowers
-            f.state = "rest"; f.rest = (rand(1.2, 2.2) - level * .15) * (isCh() ? CH.restDur : 1); f.tw = 0; f.rotTarget = f.rot;
+            f.state = "rest"; f.rest = rand(...LV().restDur) * (isCh() ? CH.restDur : 1); f.tw = 0; f.rotTarget = f.rot;
             f.el.classList.remove("flying");
           }
         }
@@ -498,7 +508,7 @@
         if (f.rest <= 0) {
           if (f.sip) beeDone(f);
           else if (MODE === "bees" && !isBee(f) && --f.restsLeft <= 0) {
-            f.leftNat = true; leave(f, 1.3);   // rested 2-3 times: leave
+            f.leftNat = true; leave(f, 1.3);   // rested 3-4 times: leave
           } else {
             f.state = "fly"; f.el.classList.add("flying");
             f.heading = f.target = rand(0, Math.PI * 2); f.turn = rand(.3, .8);
@@ -765,7 +775,7 @@
     if (gameOver) return;
     caughtInLevel++;
     renderStars(true);
-    if (caughtInLevel >= LEVELS[level].goal) {
+    if (caughtInLevel >= LV().goal) {
       if (level < LEVELS.length - 1) {
         level++; caughtInLevel = 0;
         levelUp();
@@ -778,8 +788,8 @@
 
   function fill() {
     if (gameOver) return;
-    let want = LEVELS[level].flies;
-    if (MODE !== "bees" && level === LEVELS.length - 1) want = Math.min(want, LEVELS[level].goal - caughtInLevel);
+    let want = LV().flies;
+    if (MODE !== "bees" && level === LEVELS.length - 1) want = Math.min(want, LV().goal - caughtInLevel);
     const need = want - aliveCount();
     for (let i = 0; i < need; i++) {
       pending++;
@@ -797,7 +807,7 @@
 
   // ================= UI =================
   function renderStars(pop) {
-    const goal = LEVELS[level].goal;
+    const goal = LV().goal;
     starsEl.classList.toggle("many", goal > 10);
     if (!pop || starsEl.children.length !== goal) {
       starsEl.innerHTML = "";
@@ -818,7 +828,7 @@
   function levelUp() {
     lvNum.textContent = ar(level + 1);
     if (isCh()) { timeLeft += ALLOT[level]; shownTime = -1; renderTime(); }
-    const minis = Array.from({ length: LEVELS[level].flies },
+    const minis = Array.from({ length: LV().flies },
       () => `<span class="mini">${FLY_SVG}</span>`).join("");
     banner.innerHTML = `<div class="inner">
         <div class="b-title">${T("cheers")[level] || T("cheers")[1]}</div>
