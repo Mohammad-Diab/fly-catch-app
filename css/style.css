@@ -225,12 +225,20 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 /* ================= HUD ================= */
 .hud{
   position:absolute;top:0;left:0;right:0;z-index:10;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"level stars btns";
+  align-items:center;gap:10px;
   padding:clamp(8px,2vmin,14px);pointer-events:none;
 }
 .hud > *{pointer-events:auto}
-.hud{flex-wrap:wrap}
-.cstats{display:none;flex-basis:100%;justify-content:center;gap:8px}
+.hud .level{grid-area:level;justify-self:start}
+.hud .stars{grid-area:stars;justify-self:center}
+.hud .hud-btns{grid-area:btns;justify-self:end}
+/* Small screens: level and buttons on the first row, progress on its own row */
+@media (max-width:900px){
+  .hud{grid-template-areas:"level . btns" "stars stars stars"}
+  .hud .stars{justify-self:stretch}
+}
+.cstats{display:none;grid-column:1/-1;justify-content:center;gap:8px}
 body.challenge .cstats{display:flex}
 .cstat{display:flex;align-items:baseline;gap:6px;padding:4px 14px 6px;font-weight:600;
   font-size:clamp(14px,3.4vmin,19px);white-space:nowrap}

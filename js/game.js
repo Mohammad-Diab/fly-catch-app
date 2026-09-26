@@ -1,6 +1,6 @@
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
-  const VERSION = "1.14.3";
+  const VERSION = "1.14.4";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION; });
