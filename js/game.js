@@ -75,6 +75,10 @@
   <circle cx="80" cy="80" r="62" fill="none" stroke="#FFB07A" stroke-width="2.5" stroke-dasharray="6 10" opacity=".85"/>
 </svg>`;
 
+  const DOWNLOAD_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M7 10l5 5 5-5"/><path d="M4.5 20h15"/></svg>`;
+
+  const TROPHY_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" fill="currentColor" fill-opacity=".25"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.8 3.9M16 6h2.5a2.5 2.5 0 0 1-2.8 3.9"/><path d="M12 13v4M9 20.5h6M10 17h4"/></svg>`;
+
   const STAR_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>`;
 
   const ICON_SPK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -159,6 +163,8 @@
   const startScreen = $("startScreen"), endScreen = $("endScreen");
   const muteBtn = $("mute");
   $("heroFly").innerHTML = FLY_SVG;
+  const ICONS = { fly: FLY_SVG, bee: BEE_SVG, download: DOWNLOAD_SVG, trophy: TROPHY_SVG };
+  document.querySelectorAll("[data-ico]").forEach(e => { e.innerHTML = ICONS[e.dataset.ico]; });
 
   const rand  = (a, b) => a + Math.random() * (b - a);
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1004,8 +1010,49 @@
   glass.addEventListener("pointerleave", () => { mouseIn = false; syncCursor(); });
   glass.addEventListener("contextmenu", e => e.preventDefault());
 
+  // Grown-up controls need a press-and-hold so toddlers can't set them off; a quick tap nudges and shows a hint
+  const HOLD_MS = 700;
+  let hintT = null;
+  function showHint(btn) {
+    const hint = $("holdHint"), card = btn.closest(".card");
+    hint.classList.add("show");
+    const w = hint.offsetWidth, h = hint.offsetHeight;
+    const below = btn.offsetTop + btn.offsetHeight + 8 + h <= card.scrollHeight - 4;   // above only when there's no room below
+    hint.style.left = clamp(btn.offsetLeft + btn.offsetWidth / 2 - w / 2, 8, card.clientWidth - w - 8) + "px";
+    hint.style.top = (below ? btn.offsetTop + btn.offsetHeight + 8 : btn.offsetTop - h - 8) + "px";
+    clearTimeout(hintT); hintT = setTimeout(() => hint.classList.remove("show"), 2200);
+  }
+  function holdButton(btn, action) {
+    let timer = null, ready = false;
+    btn.style.setProperty("--hold", HOLD_MS + "ms");
+    const reset = () => { clearTimeout(timer); ready = false; btn.classList.remove("holding", "ready"); };
+    btn.addEventListener("pointerdown", e => {
+      if (e.button > 0) return;
+      reset(); btn.classList.add("holding");
+      timer = setTimeout(() => { ready = true; btn.classList.add("ready"); }, HOLD_MS);
+    });
+    btn.addEventListener("pointerup", () => {
+      const go = ready;
+      reset();
+      if (go) { sfx.init(); sfx.uiOn(); action(); return; }
+      btn.classList.remove("nudge"); void btn.offsetWidth; btn.classList.add("nudge");
+      showHint(btn);
+    });
+    btn.addEventListener("pointerleave", reset);
+    btn.addEventListener("pointercancel", reset);
+    btn.addEventListener("click", e => { if (e.detail === 0) action(); });   // keyboard activates right away
+  }
+
   $("startBtn").addEventListener("click", () => startGame("kids"));
-  $("challengeBtn").addEventListener("click", () => startGame("challenge"));
+  holdButton($("challengeBtn"), () => startGame("challenge"));
+  // Tapping the menu fly catches it and starts the kids game, the most natural thing a toddler will try
+  $("heroFly").addEventListener("click", () => {
+    const hero = $("heroFly");
+    if (hero.classList.contains("tapped")) return;
+    sfx.init(); sfx.caught();
+    hero.classList.add("tapped");
+    setTimeout(() => { hero.classList.remove("tapped"); startGame("kids"); }, 420);
+  });
   $("againBtn").addEventListener("click", () => startGame(MODE));
   $("beesBtn").addEventListener("click", () => startGame("bees"));
   $("chAgain").addEventListener("click", () => startGame("challenge"));
@@ -1018,7 +1065,7 @@
     e.preventDefault(); installEvt = e;
     if (!installed()) installBtn.hidden = false;
   });
-  installBtn.addEventListener("click", async () => {
+  holdButton(installBtn, async () => {
     if (!installEvt) return;
     installEvt.prompt();
     try { await installEvt.userChoice; } catch (e) {}
@@ -1098,13 +1145,14 @@
     document.querySelector('meta[name="apple-mobile-web-app-title"]').content = T("title");
     document.querySelectorAll("[data-i18n]").forEach(e => { e.textContent = T(e.dataset.i18n); });
     document.querySelectorAll("[data-i18n-aria]").forEach(e => e.setAttribute("aria-label", T(e.dataset.i18nAria)));
+    document.querySelectorAll("[data-i18n-title]").forEach(e => { e.title = T(e.dataset.i18nTitle); });
     const next = nextLang();
     $("langBtn").hidden = !next || next === LANG;
     if (next) { $("langBtn").textContent = STR[next].langName; $("langBtn").setAttribute("lang", next); }
     lvNum.textContent = ar(level + 1);
     renderMute(); renderStats(); measure();
   }
-  $("langBtn").addEventListener("click", () => {
+  holdButton($("langBtn"), () => {
     LANG = nextLang();
     try { localStorage.setItem("flyCatch.lang", LANG); } catch (e) {}
     applyLang();
@@ -1227,6 +1275,22 @@
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { pauseGame(); sfx.suspend(); miss.stop(); } else sfx.resume();
   });
+  // Layout modes are classes so each switch can run as a view transition that glides elements into place
+  const LAYOUTS = [
+    ["split-cards", "(orientation:landscape) and (max-height:820px)"],
+    ["hud-stack", "(max-aspect-ratio:6/5),(max-width:540px)"],
+  ];
+  const calm = matchMedia("(prefers-reduced-motion: reduce)");
+  LAYOUTS.forEach(([cls, query]) => {
+    const mq = matchMedia(query);
+    const apply = () => { document.documentElement.classList.toggle(cls, mq.matches); measure(); };
+    apply();
+    mq.addEventListener("change", () => {
+      if (document.startViewTransition && !calm.matches && !document.hidden) document.startViewTransition(apply);
+      else apply();
+    });
+  });
+
   addEventListener("resize", () => {
     measure();
     flies.forEach(f => {

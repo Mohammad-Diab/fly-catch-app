@@ -233,11 +233,9 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 .hud .level{grid-area:level;justify-self:start}
 .hud .stars{grid-area:stars;justify-self:center}
 .hud .hud-btns{grid-area:btns;justify-self:end}
-/* Narrow or portrait screens: level and buttons on the first row, progress on its own row */
-@media (max-aspect-ratio:6/5),(max-width:540px){
-  .hud{grid-template-areas:"level . btns" "stars stars stars"}
-  .hud .stars{justify-self:stretch}
-}
+/* Narrow or portrait screens (class set from JS): level and buttons first, progress on its own row */
+html.hud-stack .hud{grid-template-areas:"level . btns" "stars stars stars"}
+html.hud-stack .hud .stars{justify-self:stretch}
 .cstats{display:none;grid-column:1/-1;justify-content:center;gap:8px}
 body.challenge .cstats{display:flex}
 .cstat{display:flex;align-items:baseline;gap:6px;padding:4px 14px 6px;font-weight:600;
@@ -270,7 +268,6 @@ body.challenge .cstats{display:flex}
 .star.pop svg{animation:starPop .5s cubic-bezier(.2,1.9,.4,1)}
 @keyframes starPop{0%{transform:scale(.3)}60%{transform:scale(1.45)}100%{transform:scale(1)}}
 .hud-btns{display:flex;gap:8px;align-items:center}
-#pauseScreen .modes{margin-top:18px}
 .hud .pausebtn{display:none}   /* Must outrank the .mute display rule below */
 body.playing .hud .pausebtn{display:grid}
 /* Pause: freeze every scene animation except the pause screen */
@@ -327,18 +324,29 @@ body.playing .hud .pausebtn{display:grid}
 }
 .overlay{pointer-events:none}
 .overlay.show{opacity:1;visibility:visible;pointer-events:auto}
+/* Every card: grown-up pills in the top corners, the intro, big kid actions, and a quiet footer */
 .card{
   position:relative;z-index:1;background:var(--panel);color:var(--ink);
-  border-radius:28px;padding:clamp(20px,5vmin,40px);text-align:center;width:min(92%,480px);
+  border-radius:28px;text-align:center;width:min(92%,480px);
+  padding:clamp(12px,3vmin,18px) clamp(14px,3.6vmin,24px);
   box-shadow:0 18px 50px rgba(0,0,0,.25),0 6px 0 rgba(0,0,0,.08);
   max-height:100%;overflow:hidden auto;overscroll-behavior:contain;touch-action:pan-y;   /* scrolls only if it still can't fit */
+  display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "intro" "actions" "foot";
+  align-items:center;row-gap:clamp(14px,3.4vmin,24px);
 }
-.card h1,.card h2{font-weight:800;margin:.1em 0 .05em;line-height:1.15}
+.card-intro{grid-area:intro}
+.card-actions{grid-area:actions;justify-self:center;width:min(100%,400px);
+  display:flex;flex-direction:column;align-items:stretch;gap:clamp(10px,2.4vmin,16px)}
+.card-top{grid-area:top;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:2em}
+.card-foot{grid-area:foot;display:flex;flex-direction:column;align-items:center;gap:6px}
+
+.card h1,.card h2{font-weight:800;margin:0;line-height:1.15}
 .card h1{font-size:clamp(36px,9vmin,58px)}
 .card h2{font-size:clamp(32px,8vmin,50px)}
-.card p{margin:0 0 1em;font-size:clamp(17px,4vmin,22px);color:var(--ink-soft);line-height:1.5}
-.hero{position:relative;width:clamp(90px,24vmin,140px);aspect-ratio:1;margin:0 auto .2em;
-  animation:hover 3.2s ease-in-out infinite}
+.card p{margin:.3em 0 0;font-size:clamp(17px,4vmin,22px);color:var(--ink-soft);line-height:1.45}
+.hero{position:relative;width:clamp(90px,24vmin,140px);aspect-ratio:1;margin:0 auto .15em;cursor:pointer;
+  filter:drop-shadow(0 12px 10px rgba(0,0,0,.16));animation:hover 3.2s ease-in-out infinite}
+.hero.tapped svg{animation:squash .46s cubic-bezier(.3,1.7,.5,1)}
 @keyframes hover{
   0%,100%{transform:translate(-14px,0) rotate(-14deg)}
   25%{transform:translate(0,-10px) rotate(6deg)}
@@ -346,33 +354,32 @@ body.playing .hud .pausebtn{display:grid}
   75%{transform:translate(0,8px) rotate(-4deg)}
 }
 .trophy{font-size:clamp(54px,14vmin,90px);line-height:1}
+
+/* Big kid buttons: bold, tactile, with the game's own fly and bee */
 .big{
-  font:inherit;font-weight:800;font-size:clamp(22px,5.5vmin,32px);color:#fff;
-  background:var(--good);border:0;border-radius:999px;padding:.45em 1.6em .6em;
-  box-shadow:0 6px 0 var(--good-dark);cursor:pointer;
+  position:relative;overflow:hidden;isolation:isolate;
+  display:flex;align-items:center;justify-content:center;gap:.4em;
+  font:inherit;font-weight:800;font-size:clamp(22px,5.5vmin,32px);line-height:1.15;color:#fff;
+  background:var(--good);border:0;border-radius:999px;padding:.42em .7em .52em;cursor:pointer;
+  box-shadow:0 6px 0 var(--good-dark),0 14px 24px rgba(47,154,79,.28);
+  transition:transform .12s ease,box-shadow .12s ease;
 }
-.big:active{transform:translateY(4px);box-shadow:0 2px 0 var(--good-dark)}
-.big small{display:block;font-size:.5em;font-weight:600;opacity:.88;line-height:1.3}
-.card{position:relative}
-.lang{position:absolute;top:12px;inset-inline-end:12px;border:2px solid var(--star-empty);background:transparent;
-  color:var(--ink-soft);font:inherit;font-weight:700;font-size:14px;border-radius:999px;padding:3px 12px 5px;cursor:pointer}
-.lang:focus-visible{outline:3px solid var(--net);outline-offset:3px}
-.install{display:block;margin:12px auto 0;font:inherit;font-weight:800;font-size:clamp(15px,3.8vmin,18px);
-  color:#fff;background:var(--net);border:0;border-radius:999px;padding:.3em 1.2em .45em;cursor:pointer;
-  box-shadow:0 4px 0 #D9571C}
-.install:active{transform:translateY(3px);box-shadow:0 1px 0 #D9571C}
-.install:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-.install[hidden],.ios-hint[hidden]{display:none}
-.card .ios-hint{margin:8px 0 0;font-size:13px;font-weight:600;color:var(--ink-soft);line-height:1.45}   /* Outranks .card p */
-.card .ios-hint + .ios-hint{margin-top:4px}
-.ver{margin:1em 0 0;font-size:12px;font-weight:600;color:var(--ink-soft);opacity:.55;letter-spacing:.5px}
-/* Kids mode buttons stacked at equal size */
-.modes{display:flex;flex-direction:column;align-items:stretch;gap:14px;width:min(100%,400px);margin:0 auto}
-.modes .big{padding:.4em .8em .55em}
-.big.bee{background:#FFC93C;color:#3A2A1F;box-shadow:0 6px 0 #D9951A}
+.big:active{transform:translateY(4px) scale(.97);box-shadow:0 2px 0 var(--good-dark)}
+.big .lbl{display:flex;flex-direction:column;align-items:center;min-width:0}
+/* Mode buttons share one grid so the fly and bee line up: fixed icon slot, label centered in the rest */
+.big.mode{display:grid;grid-template-columns:2.1em minmax(0,1fr);column-gap:.3em;padding-inline:.7em 1.1em}
+.big small{display:block;font-size:.5em;font-weight:600;opacity:.9;line-height:1.3;margin-top:.12em}
+.big .ico{flex:none;width:2.1em;aspect-ratio:1;margin-block:-.4em;filter:drop-shadow(0 3px 2px rgba(0,0,0,.2))}
+.big .ico svg{width:100%;height:100%;display:block;overflow:visible}
+.big.bee{background:#FFC93C;color:#3A2A1F;box-shadow:0 6px 0 #D9951A,0 14px 24px rgba(217,149,26,.28)}
 .big.bee:active{box-shadow:0 2px 0 #D9951A}
+/* A soft shine sweeps across now and then */
+.big::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.4) 50%,transparent 62%);
+  translate:-130% 0;animation:shine 5s ease-in-out 1.8s infinite}
+.big.bee::after{animation-delay:3.2s}
+@keyframes shine{0%,72%{translate:-130% 0}100%{translate:130% 0}}
 /* Auto-restart fill grows in reading direction; animating width keeps the edge rounded */
-.big.auto{position:relative;overflow:hidden;isolation:isolate}
 .big.auto::before{
   content:"";position:absolute;top:0;bottom:0;inset-inline-start:0;width:0;z-index:-1;
   border-radius:999px;background:rgba(255,255,255,.36);
@@ -380,21 +387,65 @@ body.playing .hud .pausebtn{display:grid}
 }
 @keyframes fillup{to{width:100%}}
 
-.alt{
-  display:block;margin:14px auto 0;font:inherit;font-weight:800;font-size:clamp(16px,4vmin,20px);
-  color:var(--ink);background:transparent;border:2.5px solid var(--star-empty);border-radius:999px;
-  padding:.3em 1.3em .45em;cursor:pointer;line-height:1.35;
+/* Grown-up controls: small, quiet pills; the ones marked .hold need a press-and-hold */
+.chip{
+  position:relative;overflow:hidden;isolation:isolate;
+  font:inherit;font-weight:700;font-size:clamp(13px,3.2vmin,15px);line-height:1.2;color:var(--ink-soft);
+  background:transparent;border:2px solid var(--star-empty);border-radius:999px;padding:.35em .95em .45em;cursor:pointer;
+  transition:transform .12s ease,color .2s,border-color .2s;
 }
-.alt small{display:block;font-weight:600;font-size:.72em;color:var(--ink-soft)}
-.alt:active{transform:translateY(2px)}
-.alt:focus-visible{outline:4px solid var(--net);outline-offset:4px}
+.chip:active{transform:scale(.95)}
+.chip:focus-visible{outline:3px solid var(--net);outline-offset:3px}
+.chip[hidden]{display:none}
+.chip.accent{color:var(--net);border-color:currentColor}
+.chip .cico{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;margin-inline-end:.35em}
+.chip .cico svg{width:100%;height:100%;display:block}
+/* Challenge sits with the modes, one clear step quieter than the two kid buttons */
+.chip.mode-alt{display:flex;align-items:center;justify-content:center;gap:.35em;flex-wrap:wrap;
+  font-size:clamp(15px,3.6vmin,18px);padding:.5em 1em .55em;color:var(--ink)}
+.chip.mode-alt .cico{margin:0;width:1.3em;height:1.3em;color:#E0A21B}
+.chip.mode-alt small{font-size:.8em;font-weight:600;color:var(--ink-soft)}
+.chip.mode-alt small::before{content:"·";margin-inline-end:.35em}
+.chip.hold::before{content:"";position:absolute;inset-block:0;inset-inline-start:0;width:0;z-index:-1;
+  border-radius:inherit;background:var(--net-soft);opacity:.6}
+.chip.holding::before{width:100%;transition:width var(--hold,.7s) linear}
+.chip.ready{color:var(--ink);border-color:var(--net)}
+.chip.nudge{animation:nudge .45s ease}
+@keyframes nudge{20%{rotate:-6deg}40%{rotate:5deg}60%{rotate:-3deg}80%{rotate:2deg}}
+.ver{font-size:11px;font-weight:600;color:var(--ink-soft);opacity:.5;letter-spacing:.5px}
+/* Hint bubble placed next to the pill that was only tapped (positioned from JS) */
+.card .hold-hint{position:absolute;z-index:5;left:0;top:0;margin:0;padding:.35em .85em .45em;border-radius:999px;
+  background:var(--ink);color:var(--panel);font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap;
+  pointer-events:none;opacity:0;translate:0 4px;transition:opacity .2s ease,translate .2s ease}
+.card .hold-hint.show{opacity:1;translate:0 0}
+.card .ios-hint{margin:0;font-size:12px;font-weight:600;color:var(--ink-soft);line-height:1.45}   /* Outranks .card p */
+.ios-hint[hidden]{display:none}
+
+/* Entrances: the card pops, the fly zooms in, and the kid buttons bounce up one after another */
+.overlay.show .card{animation:cardIn .55s cubic-bezier(.2,1.3,.4,1) both}
+.overlay.show .card-intro > :not(.hero){animation:popUp .5s cubic-bezier(.2,1.4,.4,1) both}
+.overlay.show .card-intro > :nth-child(2){animation-delay:.08s}
+.overlay.show .card-intro > :nth-child(3){animation-delay:.14s}
+.overlay.show .hero{animation:heroIn .9s cubic-bezier(.2,1.2,.4,1) both,hover 3.2s ease-in-out .9s infinite}
+.overlay.show .trophy{animation:trophyIn .8s cubic-bezier(.2,1.7,.4,1) .12s both}
+.overlay.show .card-actions > *{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both}
+.overlay.show .card-actions > :nth-child(2){animation-delay:.32s}
+.overlay.show .card-actions > :nth-child(3){animation-delay:.44s}
+.overlay.show #startBtn{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both,breathe 2.6s ease-in-out 1.4s infinite}
+.overlay.show .card-foot,.overlay.show .card-top{animation:fadeIn .5s ease .5s both}
+@keyframes cardIn{from{opacity:0;translate:0 34px;scale:.92}}
+@keyframes popUp{from{opacity:0;translate:0 26px;scale:.86}}
+@keyframes heroIn{from{opacity:0;translate:-60vw -30px;scale:.5}}
+@keyframes trophyIn{from{opacity:0;scale:.2;rotate:-25deg}}
+@keyframes breathe{50%{scale:1.04}}
+@keyframes fadeIn{from{opacity:0}}
 
 /* Challenge end screen */
 .score-big{font-weight:800;font-size:clamp(46px,13vmin,78px);line-height:1;margin:.12em 0}
-.best{font-weight:700;font-size:clamp(16px,4vmin,21px);color:var(--ink-soft);margin:0 0 .7em}
+.card .best{font-weight:700;font-size:clamp(16px,4vmin,21px);color:var(--ink-soft);margin:0}
 #chTitle{font-size:clamp(22px,6.5vmin,40px)}
 .best.new{color:var(--net);animation:beat .45s ease-in-out infinite alternate}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:0 0 1.1em}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .grid div{background:var(--tile);border-radius:16px;padding:8px 6px 9px}
 .grid b{display:block;font-weight:800;font-size:clamp(20px,5vmin,28px);line-height:1.15}
 .grid span{font-size:clamp(13px,3.2vmin,15px);color:var(--ink-soft);font-weight:600}
@@ -403,35 +454,45 @@ body.playing .hud .pausebtn{display:grid}
   animation:fall var(--d) cubic-bezier(.3,.5,.6,1) forwards;pointer-events:none}
 @keyframes fall{to{transform:translate(var(--x),112vh) rotate(var(--r))}}
 
-/* Landscape screens too short for a stacked card: intro beside the actions */
-@media (orientation:landscape) and (max-height:820px){
-  .card.split{width:min(96%,860px);display:flex;align-items:center;gap:clamp(16px,4vw,40px);padding:clamp(14px,4vmin,28px)}
-  .card.split > .card-intro,.card.split > .card-actions{flex:1 1 0;min-width:0}
-  .card.split .lang{inset-inline-end:auto;inset-inline-start:12px}
-  .hero{width:clamp(64px,20vmin,120px)}
-  .card p{margin-bottom:.4em}
-  .modes{gap:10px}
-  .alt{margin-top:10px}
-  .grid{margin-bottom:.8em}
-  .ver{margin-top:.6em}
-}
+/* Landscape screens too short for a stacked card (class set from JS): intro beside the actions */
+html.split-cards .card.split{width:min(96%,880px);grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
+  grid-template-areas:"top top" "intro actions" "foot foot";column-gap:clamp(18px,4vw,44px)}
+html.split-cards .card.split .card-actions{width:100%}
+html.split-cards .hero{width:clamp(64px,20vmin,120px)}
+html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 /* Very short screens, like small phones sideways */
 @media (orientation:landscape) and (max-height:420px){
-  .card.split{padding:12px 16px}
-  .card h1{font-size:30px}
+  .card{row-gap:6px}
+  .card-actions{gap:6px}
+  .big{padding-block:.3em .38em}
+  .chip.mode-alt{font-size:13px;padding:.3em .8em .35em}
+  .card-top{min-height:0}
+  .card h1{font-size:28px}
   .card h2{font-size:28px}
   .big{font-size:20px}
-  .alt{font-size:15px;margin-top:8px}
+  .chip{font-size:12px}
   .score-big{font-size:40px}
-  .best{margin-bottom:.4em}
   .grid{gap:6px}
   .grid div{padding:4px 6px 5px}
   .grid b{font-size:18px}
   .grid span{font-size:12px}
-  .grid{margin-bottom:.5em}
-  .ver{margin-top:.3em}
-  #chEnd .ver{display:none}
 }
+
+/* Layout switches glide each piece to its new place instead of jumping */
+.menu{view-transition-name:menu-card}
+.menu .hero{view-transition-name:menu-hero}
+.menu h1{view-transition-name:menu-title}
+.menu .tagline{view-transition-name:menu-tagline}
+#startBtn{view-transition-name:menu-play}
+#beesBtn{view-transition-name:menu-bees}
+#challengeBtn{view-transition-name:menu-challenge}
+.menu .card-top{view-transition-name:menu-top}
+.menu .card-foot{view-transition-name:menu-foot}
+.hud .level{view-transition-name:hud-level}
+.hud .stars{view-transition-name:hud-stars}
+.hud .hud-btns{view-transition-name:hud-btns}
+::view-transition-group(*){animation-duration:.55s;animation-timing-function:cubic-bezier(.3,1.3,.4,1)}
+::view-transition-old(*),::view-transition-new(*){animation-duration:.3s}
 
 /* Large monitors: scale the UI up instead of leaving it at its max size */
 @media (min-width:1000px) and (min-height:1000px){
@@ -444,4 +505,6 @@ body.playing .hud .pausebtn{display:grid}
 @media (prefers-reduced-motion:reduce){
   .cloud,.hero{animation:none}
   .confetti{display:none}
+  .overlay.show .card,.overlay.show .card *,.big::after{animation:none !important}
+  ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none !important}
 }

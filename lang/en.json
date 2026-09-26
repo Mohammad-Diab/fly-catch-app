@@ -4,13 +4,14 @@
 
   "title": "Fly Catcher",
   "tagline": "Tap a fly to catch it with the net",
-  "kidsBtn": "🪰 Let's play!",
+  "kidsBtn": "Let's play!",
   "kidsSub": "Catch the flies",
-  "beesBtn": "🐝 Watch the bees",
+  "beesBtn": "Watch the bees",
   "beesSub": "Catch flies, not bees",
-  "chBtn": "🏆 Challenge",
+  "chBtn": "Challenge",
   "chSub": "Points & timer",
-  "install": "📲 Install the game",
+  "holdHint": "Press and hold",
+  "install": "Install the game",
   "iosHint": "To install: tap Share, then “Add to Home Screen”",
   "silentHint": "🔕 No sound? Make sure your device isn't on silent",
 
