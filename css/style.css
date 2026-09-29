@@ -138,7 +138,7 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 .bee-alert svg{width:clamp(72px,16vmin,112px);height:auto;display:block;margin:0 auto;
   filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
 .bee-alert span{display:inline-block;margin-top:6px;background:#fff;color:#C2332E;font-weight:800;
-  font-size:clamp(18px,4.6vmin,26px);padding:2px 16px 6px;border-radius:999px;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+  font-size:clamp(18px,4.6vmin,26px);padding:2px 16px 6px;border-radius:999px;box-shadow:0 4px 0 rgba(0,0,0,.12);white-space:nowrap}
 @keyframes alertIn{
   0%  {opacity:0;transform:translate(-50%,-50%) scale(.3)}
   12% {opacity:1;transform:translate(-50%,-50%) scale(1.15)}
@@ -235,7 +235,7 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 .hud .hud-btns{grid-area:btns;justify-self:end}
 /* Narrow or portrait screens (class set from JS): level and buttons first, progress on its own row */
 html.hud-stack .hud{grid-template-areas:"level . btns" "stars stars stars"}
-html.hud-stack .hud .stars{justify-self:stretch}
+html.hud-stack .hud .stars{justify-self:center;max-width:100%}
 .cstats{display:none;grid-column:1/-1;justify-content:center;gap:8px}
 body.challenge .cstats{display:flex}
 .cstat{display:flex;align-items:baseline;gap:6px;padding:4px 14px 6px;font-weight:600;
@@ -316,6 +316,69 @@ body.playing .hud .pausebtn{display:grid}
 .mini{width:clamp(30px,7vmin,46px);aspect-ratio:1}
 .b-sub{font-weight:600;font-size:clamp(16px,4vmin,22px);color:var(--ink-soft)}
 
+/* ================= Scenes ================= */
+/* Each mode has its own sky and ground so a child can tell the games apart at a glance; colours glide between them */
+@property --sky-top{syntax:"<color>";inherits:true;initial-value:#7CC8F7}
+@property --sky-bot{syntax:"<color>";inherits:true;initial-value:#DFF4FF}
+@property --hill-far{syntax:"<color>";inherits:true;initial-value:#9ED98B}
+@property --hill-near{syntax:"<color>";inherits:true;initial-value:#6CC26A}
+@property --tree{syntax:"<color>";inherits:true;initial-value:#3F9B53}
+body{transition:--sky-top 1.2s ease,--sky-bot 1.2s ease,--hill-far 1.2s ease,--hill-near 1.2s ease,--tree 1.2s ease}
+body[data-mode="bees"]{--sky-top:#86CFEF;--sky-bot:#FFF0C4;--hill-far:#CFE07A;--hill-near:#A5C94A;--tree:#5E9E3A}
+body[data-mode="butterflies"]{--sky-top:#B3C7FF;--sky-bot:#FFE4F2;--hill-far:#9EE0AE;--hill-near:#55BD78;--tree:#3F9460}
+body[data-mode="challenge"]{--sky-top:#7C79E0;--sky-bot:#FFC79A;--hill-far:#8CC77A;--hill-near:#5AA65A;--tree:#3C7F48}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) body[data-mode="bees"]{--sky-top:#23305A;--sky-bot:#6E5A6A;--hill-far:#465E33;--hill-near:#3A5029;--tree:#2E4A24}
+  :root:not([data-theme="light"]) body[data-mode="butterflies"]{--sky-top:#2A2656;--sky-bot:#6E4A80;--hill-far:#2E5A4A;--hill-near:#24493B;--tree:#1F4A33}
+  :root:not([data-theme="light"]) body[data-mode="challenge"]{--sky-top:#2B1E4E;--sky-bot:#86485A;--hill-far:#2F5043;--hill-near:#253F36;--tree:#1F3F2E}
+}
+:root[data-theme="dark"] body[data-mode="bees"]{--sky-top:#23305A;--sky-bot:#6E5A6A;--hill-far:#465E33;--hill-near:#3A5029;--tree:#2E4A24}
+:root[data-theme="dark"] body[data-mode="butterflies"]{--sky-top:#2A2656;--sky-bot:#6E4A80;--hill-far:#2E5A4A;--hill-near:#24493B;--tree:#1F4A33}
+:root[data-theme="dark"] body[data-mode="challenge"]{--sky-top:#2B1E4E;--sky-bot:#86485A;--hill-far:#2F5043;--hill-near:#253F36;--tree:#1F3F2E}
+.cloud{transition:opacity 1s ease}
+body[data-mode="butterflies"] .cloud{opacity:0}
+
+/* ================= Butterfly garden ================= */
+.bfly{position:absolute;left:0;top:0;width:var(--s);height:var(--s);will-change:transform;transition:width .8s ease,height .8s ease}
+.bfly.carried{transition-duration:.15s}   /* shrinks into the net at once */
+.bfly .rot{width:100%;height:100%}
+.bfly svg,.bslot svg,.bcount svg,.gflower svg{width:100%;height:100%;display:block;overflow:visible}
+.bfly svg{filter:drop-shadow(0 6px 5px rgba(0,0,0,var(--sha,.22)))}
+/* Wings fold toward the body: slow while resting, fast while fleeing */
+.bfly .wings,.big .ico .wings{transform-origin:50px 50px;animation:bflap .34s ease-in-out infinite}
+.big .ico .wings{animation-duration:.7s}
+.bfly.rest .wings{animation-duration:2.4s}
+.bfly.flee .wings{animation-duration:.14s}
+@keyframes bflap{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.2)}}
+.bfly.hint svg{filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 14px var(--c))}
+.bfly.hint .rot{animation:bhint .8s ease-in-out infinite}
+@keyframes bhint{50%{scale:1.22}}
+.gflower{position:absolute;left:0;top:0;transform-origin:50% 100%;animation:ggrow .9s cubic-bezier(.2,1.5,.4,1) both}
+.gflower .inner{width:100%;height:100%;transform-origin:50% 100%}
+.gflower svg{filter:drop-shadow(0 8px 6px rgba(0,0,0,.16))}
+.gflower .glow{opacity:0}
+.gflower.current .glow{animation:gglow 1.5s ease-in-out infinite}
+.gflower.nudge .inner{animation:gnudge .5s ease}
+.gflower.done .inner{animation:gcheer .7s cubic-bezier(.2,1.6,.4,1)}
+.gflower.wilt{animation:gwilt .6s ease-in forwards}
+@keyframes ggrow{from{transform:var(--at) scale(0) rotate(-10deg)}}   /* grows in its own spot (--at holds its position) */
+@keyframes gglow{0%,100%{opacity:.08}50%{opacity:.38}}
+@keyframes gnudge{25%{transform:rotate(-7deg) scale(1.06)}50%{transform:rotate(6deg) scale(1.08)}75%{transform:rotate(-3deg)}}
+@keyframes gcheer{40%{transform:scale(1.15)}}
+@keyframes gwilt{to{transform:var(--at) scale(0) rotate(12deg);opacity:0}}
+.bslot{position:absolute;left:0;top:0;pointer-events:none;animation:bslotIn .4s ease .6s both,bslot 1.3s ease-in-out 1s infinite}
+@keyframes bslotIn{from{opacity:0;scale:.4}to{opacity:.55;scale:.94}}
+@keyframes bslot{0%,100%{opacity:.55;scale:.94}50%{opacity:1;scale:1.04}}
+/* Counter beside the flower: one mini butterfly per butterfly needed, in the flower's own colour, filled as each lands */
+.bcount{position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:999px;
+  background:var(--panel-a);box-shadow:0 4px 0 rgba(0,0,0,.1);transition:opacity .4s ease;animation:fadeIn .4s ease .5s both}   /* after the flower has grown */
+.bcount .n{display:block;text-align:center;font-weight:800;font-size:calc(var(--m) * .56);line-height:1.1;color:var(--k);padding-top:2px}
+.bcount .n.pop{animation:bpop .5s cubic-bezier(.2,1.9,.4,1)}
+.bcount i{display:block;width:var(--m);height:var(--m);opacity:.6}
+.bcount i.on{opacity:1;animation:bpop .5s cubic-bezier(.2,1.9,.4,1)}
+.bcount.gone{opacity:0}
+@keyframes bpop{0%{scale:.3}60%{scale:1.4}100%{scale:1}}
+
 /* ================= Screens ================= */
 .overlay{
   position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:16px;
@@ -330,7 +393,7 @@ body.playing .hud .pausebtn{display:grid}
   border-radius:28px;text-align:center;width:min(92%,480px);
   padding:clamp(12px,3vmin,18px) clamp(14px,3.6vmin,24px);
   box-shadow:0 18px 50px rgba(0,0,0,.25),0 6px 0 rgba(0,0,0,.08);
-  max-height:100%;overflow:hidden auto;overscroll-behavior:contain;touch-action:pan-y;   /* scrolls only if it still can't fit */
+  max-height:100%;overflow:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:none;   /* squeezes to fit first; scrolls (.scrolls, set from JS) only if it still can't */
   display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "intro" "actions" "foot";
   align-items:center;row-gap:clamp(14px,3.4vmin,24px);
 }
@@ -339,12 +402,40 @@ body.playing .hud .pausebtn{display:grid}
   display:flex;flex-direction:column;align-items:stretch;gap:clamp(10px,2.4vmin,16px)}
 .card-top{grid-area:top;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:2em}
 .card-foot{grid-area:foot;display:flex;flex-direction:column;align-items:center;gap:6px}
+.card::-webkit-scrollbar{display:none}
+.card.scrolls{overflow-y:auto;padding-inline:10px 52px}   /* room for the kid scrollbar */
+
+/* Kid scrollbar: chunky, rounded and bright, shown only when a card still can't fit after squeezing */
+.kscroll{
+  --ks-line:#3A2A1F;
+  position:absolute;z-index:2;width:34px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  touch-action:none;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;
+}
+.overlay.show .kscroll.on{opacity:1;visibility:visible;transition-delay:.45s}
+.ks-btn{flex:none;width:32px;height:32px;border-radius:50%;cursor:pointer;display:grid;place-items:center;
+  border:3px solid var(--ks-line);background:radial-gradient(circle at 35% 30%,#FFF1B8,#FFC93C 55%,#F29A2E);
+  box-shadow:0 3px 0 var(--ks-line);transition:translate .1s,box-shadow .1s,opacity .2s}
+.ks-btn::before{content:"";width:0;height:0;border-inline:7px solid transparent;border-bottom:9px solid var(--ks-line);margin-top:-2px}
+.ks-down::before{border-bottom:0;border-top:9px solid var(--ks-line);margin:2px 0 0}
+.ks-btn:active{translate:0 2px;box-shadow:0 1px 0 var(--ks-line)}
+.ks-btn.off{opacity:.45}
+.overlay.show .kscroll.on .ks-down:not(.off){animation:ksNudge 1.1s ease-in-out 1.2s 3}
+@keyframes ksNudge{50%{translate:0 4px}}
+.ks-track{position:relative;flex:1;width:26px;border-radius:999px;cursor:pointer;
+  border:3px solid var(--ks-line);box-shadow:inset 0 2px 4px rgba(0,0,0,.15);
+  background:repeating-linear-gradient(45deg,var(--panel) 0 6px,color-mix(in srgb,var(--star) 26%,var(--panel)) 6px 12px)}
+.ks-thumb{position:absolute;left:1px;right:1px;top:0;min-height:40px;border-radius:999px;cursor:grab;
+  border:3px solid var(--ks-line);background:linear-gradient(90deg,#FFE7A0,#FFC93C 45%,#EE9A2C);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.6),inset 0 -3px 0 rgba(0,0,0,.12);transition:scale .15s}
+.ks-thumb::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:12px;translate:-50% -50%;
+  background:repeating-linear-gradient(var(--ks-line) 0 2px,transparent 2px 5px)}
+.ks-thumb.grab{cursor:grabbing;scale:1.08}
 
 .card h1,.card h2{font-weight:800;margin:0;line-height:1.15}
 .card h1{font-size:clamp(36px,9vmin,58px)}
 .card h2{font-size:clamp(32px,8vmin,50px)}
 .card p{margin:.3em 0 0;font-size:clamp(17px,4vmin,22px);color:var(--ink-soft);line-height:1.45}
-.hero{position:relative;width:clamp(90px,24vmin,140px);aspect-ratio:1;margin:0 auto .15em;cursor:pointer;
+.hero{position:relative;width:calc(clamp(90px,24vmin,140px) * var(--shrink,1));aspect-ratio:1;margin:0 auto .15em;cursor:pointer;
   filter:drop-shadow(0 12px 10px rgba(0,0,0,.16));animation:hover 3.2s ease-in-out infinite}
 .hero.tapped svg{animation:squash .46s cubic-bezier(.3,1.7,.5,1)}
 @keyframes hover{
@@ -353,7 +444,7 @@ body.playing .hud .pausebtn{display:grid}
   50%{transform:translate(14px,0) rotate(16deg)}
   75%{transform:translate(0,8px) rotate(-4deg)}
 }
-.trophy{font-size:clamp(54px,14vmin,90px);line-height:1}
+.trophy{font-size:calc(clamp(54px,14vmin,90px) * var(--shrink,1));line-height:1}
 
 /* Big kid buttons: bold, tactile, with the game's own fly and bee */
 .big{
@@ -370,11 +461,15 @@ body.playing .hud .pausebtn{display:grid}
 .big.mode{display:grid;grid-template-columns:2.1em minmax(max-content,1fr) minmax(0,2.1em);align-items:center;column-gap:.3em;padding-inline:.7em}
 .big.mode .lbl{justify-content:center}
 @container (max-width:300px){.big.mode{font-size:20px;padding-inline:.4em;column-gap:.2em}}
+@container (max-width:210px){.big.mode{font-size:17px;grid-template-columns:1.8em minmax(0,1fr) 0}.big.mode .ico{width:1.8em}}
 .big small{display:block;font-size:.5em;font-weight:600;opacity:.9;line-height:1.3;margin-top:.12em}
 .big .ico{flex:none;width:2.1em;aspect-ratio:1;margin-block:-.4em;filter:drop-shadow(0 3px 2px rgba(0,0,0,.2))}
 .big .ico svg{width:100%;height:100%;display:block;overflow:visible}
 .big.bee{background:#FFC93C;color:#3A2A1F;box-shadow:0 6px 0 #D9951A,0 14px 24px rgba(217,149,26,.28)}
 .big.bee:active{box-shadow:0 2px 0 #D9951A}
+.big.butterfly{background:#A77BF3;box-shadow:0 6px 0 #7C4FD0,0 14px 24px rgba(124,79,208,.28)}
+.big.butterfly:active{box-shadow:0 2px 0 #7C4FD0}
+.big.butterfly::after{animation-delay:4.4s}
 /* A soft shine sweeps across now and then */
 .big::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.4) 50%,transparent 62%);
@@ -433,6 +528,7 @@ body.playing .hud .pausebtn{display:grid}
 .overlay.show .card-actions > *{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both}
 .overlay.show .card-actions > :nth-child(2){animation-delay:.32s}
 .overlay.show .card-actions > :nth-child(3){animation-delay:.44s}
+.overlay.show .card-actions > :nth-child(4){animation-delay:.56s}
 .overlay.show #startBtn{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both,breathe 2.6s ease-in-out 1.4s infinite}
 .overlay.show .card-foot,.overlay.show .card-top{animation:fadeIn .5s ease .5s both}
 @keyframes cardIn{from{opacity:0;translate:0 34px;scale:.92}}
@@ -456,22 +552,38 @@ body.playing .hud .pausebtn{display:grid}
   animation:fall var(--d) cubic-bezier(.3,.5,.6,1) forwards;pointer-events:none}
 @keyframes fall{to{transform:translate(var(--x),112vh) rotate(var(--r))}}
 
+/* Too tall for the screen: squeeze a step at a time (classes stack, set from JS) before ever scrolling.
+   Kept at low specificity so the short-screen rules below still win */
+.card:where(.fit1){--shrink:.8;row-gap:clamp(8px,2vmin,14px)}
+:where(.card.fit1) .card-top{min-height:0}
+:where(.card.fit1) .card-actions{gap:clamp(8px,1.8vmin,12px)}
+.card:where(.fit2){--shrink:.64;padding-block:10px}
+.card:where(.fit2) h1{font-size:clamp(30px,7.5vmin,46px)}
+.card:where(.fit2) h2{font-size:clamp(28px,6.8vmin,40px)}
+:where(.card.fit2) .big{padding-block:.3em .38em}
+:where(.card.fit2) .chip.mode-alt{padding-block:.32em .38em}
+.card:where(.fit3){--shrink:.5}
+:where(.card.fit3) .card-actions .big small{display:none}
+.card:where(.fit3) p{font-size:clamp(15px,3.4vmin,18px)}
+
 /* Landscape screens too short for a stacked card (class set from JS): intro beside the actions */
 html.split-cards .card.split{width:min(96%,880px);grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
   grid-template-areas:"top top" "intro actions" "foot foot";column-gap:clamp(18px,4vw,44px)}
 html.split-cards .card.split .card-actions{width:100%}
-html.split-cards .hero{width:clamp(64px,20vmin,120px)}
+html.split-cards .hero{width:calc(clamp(64px,20vmin,120px) * var(--shrink,1))}
 html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
+/* Short landscape phones: the picture and main word carry the kid buttons, so the small subtitle goes */
+@media (orientation:landscape) and (max-height:480px){.card-actions .big small{display:none}}
 /* Very short screens, like small phones sideways */
 @media (orientation:landscape) and (max-height:420px){
-  .card{row-gap:6px}
-  .card-actions{gap:6px}
-  .big{padding-block:.3em .38em}
-  .chip.mode-alt{font-size:13px;padding:.3em .8em .35em}
+  .card{row-gap:4px}
+  .card-actions{gap:5px}
+  .big{padding-block:.26em .32em}
+  .chip.mode-alt{font-size:13px;padding:.24em .8em .3em}
   .card-top{min-height:0}
   .card h1{font-size:28px}
   .card h2{font-size:28px}
-  .big{font-size:20px}
+  .big{font-size:18px}
   .chip{font-size:12px}
   .score-big{font-size:40px}
   .grid{gap:6px}
@@ -487,6 +599,7 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 .menu .tagline{view-transition-name:menu-tagline}
 #startBtn{view-transition-name:menu-play}
 #beesBtn{view-transition-name:menu-bees}
+#bfBtn{view-transition-name:menu-butterflies}
 #challengeBtn{view-transition-name:menu-challenge}
 .menu .card-top{view-transition-name:menu-top}
 .menu .card-foot{view-transition-name:menu-foot}
@@ -507,6 +620,7 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 @media (prefers-reduced-motion:reduce){
   .cloud,.hero{animation:none}
   .confetti{display:none}
-  .overlay.show .card,.overlay.show .card *,.big::after{animation:none !important}
+  .overlay.show .card,.overlay.show .card *,.big::after,.ks-btn{animation:none !important}
+  .bfly .wings,.bfly.hint .rot,.bslot,.gflower.current .glow{animation:none}
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none !important}
 }

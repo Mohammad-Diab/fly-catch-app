@@ -1,5 +1,5 @@
 // Offline support; keep VERSION in sync with js/game.js, or installed apps stay on the old version
-const VERSION = "1.14.5";
+const VERSION = "1.16.0";
 const CACHE = "fly-catch-" + VERSION;
 const FONTS = "fly-catch-fonts";          // kept across versions
 
@@ -17,9 +17,9 @@ const CORE = [
   "./icons/apple-touch-icon.png",
 ];
 
-// Install: cache the whole game
+// Install: cache the whole game, straight from the network so a new version never picks up old files
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE.map(u => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 // Activate: delete caches from old versions

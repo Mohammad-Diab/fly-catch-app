@@ -8,10 +8,13 @@
   "kidsSub": "Catch the flies",
   "beesBtn": "Watch the bees",
   "beesSub": "Catch flies, not bees",
+  "bfBtn": "Butterfly garden",
+  "bfSub": "Each butterfly to its flower",
   "chBtn": "Challenge",
   "chSub": "Points & timer",
   "holdHint": "Press and hold",
   "install": "Install the game",
+  "update": "Update the game",
   "iosHint": "To install: tap Share, then “Add to Home Screen”",
   "silentHint": "🔕 No sound? Make sure your device isn't on silent",
 
@@ -28,11 +31,13 @@
   "combo": { "2": "Double catch!", "3": "Triple!", "4": "Four! Amazing!", "5": "Five! Champion!" },
   "plusSec": "+{n} seconds",
   "thatsBee": "That's a bee!",
+  "wrongBf": "Not this butterfly!",
 
   "paused": "Paused",
   "resume": "▶ Resume",
   "wellDone": "Well done!",
   "allCaught": "You caught all the flies",
+  "allBf": "Every butterfly found its flower",
   "again": "Play again",
   "back": "Back to start",
 
