@@ -1,6 +1,6 @@
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
-  const VERSION = "1.16.0";
+  const VERSION = "1.16.1";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION; });
@@ -1597,7 +1597,7 @@
   let installEvt = null;
   addEventListener("beforeinstallprompt", e => {   // Android and desktop Chrome/Edge
     e.preventDefault(); installEvt = e;
-    if (!installed()) { installBtn.hidden = false; fitCards(); }
+    if (!installed() && $("updateBtn").hidden) { installBtn.hidden = false; fitCards(); }   // an update waiting comes first
   });
   holdButton(installBtn, async () => {
     if (!installEvt) return;
@@ -1618,13 +1618,18 @@
       // An installed app can stay open for days, so it also checks for a new version each time it comes back on screen
       document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
     }).catch(() => {});
-    // A new version has taken over in the background: offer a grown-up "Update" pill that reloads into it.
-    // The very first install also takes over, but that isn't an update
-    let hadWorker = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (hadWorker) { $("updateBtn").hidden = false; fitCards(); }
-      hadWorker = true;
+    // Offer a grown-up "Update" pill only when the service worker holds a newer version than this page is running.
+    // A worker taking over is not enough: the page has often already loaded the new files, or it's the very first install
+    const newer = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number);
+      for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+      return false; };
+    navigator.serviceWorker.addEventListener("message", e => {
+      if (!e.data || typeof e.data.version !== "string" || !newer(e.data.version, VERSION)) return;
+      $("updateBtn").hidden = false; installBtn.hidden = true; fitCards();   // one grown-up pill at a time; Install returns after the reload
     });
+    const askVersion = () => { const w = navigator.serviceWorker.controller; if (w) w.postMessage("version"); };
+    navigator.serviceWorker.addEventListener("controllerchange", askVersion);
+    askVersion();
   }
   holdButton($("updateBtn"), () => location.reload());
 

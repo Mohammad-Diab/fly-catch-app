@@ -1,5 +1,5 @@
 // Offline support; keep VERSION in sync with js/game.js, or installed apps stay on the old version
-const VERSION = "1.16.0";
+const VERSION = "1.16.1";
 const CACHE = "fly-catch-" + VERSION;
 const FONTS = "fly-catch-fonts";          // kept across versions
 
@@ -29,6 +29,11 @@ self.addEventListener("activate", e => {
       .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== FONTS).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+
+// The page asks which version this worker holds, so it only offers "Update" when that's newer than what it runs
+self.addEventListener("message", e => {
+  if (e.data === "version" && e.source) e.source.postMessage({ version: VERSION });
 });
 
 self.addEventListener("fetch", e => {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.16.1 · 2026-09-29
+
+- Install and Update buttons no longer show together
+- Update button only shows when a newer version is ready
+
 ## 1.16.0 · 2026-09-29
 
 - New butterfly levels, with two flowers at once in levels 2, 4 and 5
