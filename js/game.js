@@ -1,6 +1,6 @@
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
-  const VERSION = "1.16.1";
+  const VERSION = "1.16.2";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION; });
@@ -284,10 +284,14 @@
           const n = ctx.createBufferSource(); n.buffer = noiseBuf; n.loop = true; n.loopStart = Math.random() * .5; nodes.push(n);
           const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 300 + Math.random() * 80; bp.Q.value = 1.3;
           const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 520; lp.Q.value = .5;
+          const lowG = ctx.createGain(); lowG.gain.value = .6;
+          const mid = ctx.createBiquadFilter(); mid.type = "bandpass"; mid.frequency.value = 1000 + Math.random() * 250; mid.Q.value = 2.5;
+          const midG = ctx.createGain(); midG.gain.value = .35;
+          n.connect(mid); mid.connect(midG); midG.connect(trem);
           trem.gain.value = .45;
           beat = osc("sine", 2.9); const bg = ctx.createGain(); bg.gain.value = .45;   // wings flap about 3 times a second
           beat.connect(bg); bg.connect(trem.gain);
-          n.connect(bp); bp.connect(lp); lp.connect(trem);
+          n.connect(bp); bp.connect(lp); lp.connect(lowG); lowG.connect(trem);
         } else if (kind === "bee") {
           const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 850; lp.Q.value = .8;
           const pk = ctx.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = 300; pk.gain.value = 6;

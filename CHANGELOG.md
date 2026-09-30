@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.16.2 · 2026-09-30
+
+- Butterfly wing sound now plays on phones
+
 ## 1.16.1 · 2026-09-29
 
 - Install and Update buttons no longer show together
