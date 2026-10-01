@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.17.1 · 2026-10-01
+
+- Menu groups the modes by animal: one row each, with the harder mode as a round button beside it
+
 ## 1.17.0 · 2026-10-01
 
 - Butterfly garden is now an easy mode: every butterfly is right

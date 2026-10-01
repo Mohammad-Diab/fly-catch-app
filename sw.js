@@ -1,5 +1,5 @@
 // Offline support; keep VERSION in sync with js/game.js, or installed apps stay on the old version
-const VERSION = "1.17.0";
+const VERSION = "1.17.1";
 const CACHE = "fly-catch-" + VERSION;
 const FONTS = "fly-catch-fonts";          // kept across versions
 

@@ -465,6 +465,12 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .big small{display:block;font-size:.5em;font-weight:600;opacity:.9;line-height:1.3;margin-top:.12em}
 .big .ico{flex:none;width:2.1em;aspect-ratio:1;margin-block:-.4em;filter:drop-shadow(0 3px 2px rgba(0,0,0,.2))}
 .big .ico svg{width:100%;height:100%;display:block;overflow:visible}
+.mode-row{display:flex;align-items:stretch;gap:clamp(8px,2vmin,12px)}
+.mode-row .big.mode{flex:1;min-width:0;container:modebtn/inline-size}
+@container modebtn (max-width:210px){.big.mode .lbl{font-size:.84em}}
+@container modebtn (max-width:180px){.big.mode .lbl{font-size:.74em}}
+.big.alt{flex:none;width:2.55em;padding:0;display:grid;place-items:center}
+.big.alt .ico{width:1.9em;margin:0}
 .big.bee{background:#FFC93C;color:#3A2A1F;box-shadow:0 6px 0 #D9951A,0 14px 24px rgba(217,149,26,.28)}
 .big.bee:active{box-shadow:0 2px 0 #D9951A}
 .big.butterfly{background:#A77BF3;box-shadow:0 6px 0 #7C4FD0,0 14px 24px rgba(124,79,208,.28)}
@@ -566,9 +572,11 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .card:where(.fit2) h1{font-size:clamp(30px,7.5vmin,46px)}
 .card:where(.fit2) h2{font-size:clamp(28px,6.8vmin,40px)}
 :where(.card.fit2) .big{padding-block:.3em .38em}
+:where(.card.fit2) .big.alt{width:2.35em}
 :where(.card.fit2) .chip.mode-alt{padding-block:.32em .38em}
 .card:where(.fit3){--shrink:.5}
 :where(.card.fit3) .card-actions .big small{display:none}
+:where(.card.fit3) .big.alt{width:2.1em}
 .card:where(.fit3) p{font-size:clamp(15px,3.4vmin,18px)}
 .card:where(.fit4){--shrink:.4;row-gap:6px}
 :where(.card.fit4) .card-actions{gap:7px}
@@ -583,7 +591,7 @@ html.split-cards .card.split .card-actions{width:100%}
 html.split-cards .hero{width:calc(clamp(64px,20vmin,120px) * var(--shrink,1))}
 html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 /* Short landscape phones: the picture and main word carry the kid buttons, so the small subtitle goes */
-@media (orientation:landscape) and (max-height:480px){.card-actions .big small{display:none}}
+@media (orientation:landscape) and (max-height:480px){.card-actions .big small{display:none}.big.alt{width:2.1em}}
 /* Very short screens, like small phones sideways */
 @media (orientation:landscape) and (max-height:420px){
   .card{row-gap:4px}
