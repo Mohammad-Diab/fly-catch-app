@@ -6,7 +6,7 @@
   src:url(../fonts/baloo-bhaijaan-2-latin.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 
 :root{
-  --build:32;
+  --build:34;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -178,11 +178,12 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 /* Dizzy stars */
 .dizzy{position:absolute;left:50%;top:18%;width:0;height:0;opacity:0;transition:opacity .2s}
 .fly.dizzy-on .dizzy{opacity:1}
+.fly.dizzy-on .dizzy i{animation-play-state:running}
 .dizzy i{
   position:absolute;left:calc(var(--fly,70px)*-.12);top:calc(var(--fly,70px)*-.12);
   width:calc(var(--fly,70px)*.24);aspect-ratio:1;background:var(--star);
   clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
-  animation:orbit .9s linear infinite;
+  animation:orbit .9s linear infinite paused;
 }
 .dizzy i:nth-child(2){animation-delay:-.3s}
 .dizzy i:nth-child(3){animation-delay:-.6s}
@@ -382,6 +383,14 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
 .ant.sniff .antn{animation:antFeel .25s ease-in-out infinite alternate}
 @keyframes antStep{0%{rotate:-13deg;translate:0 0}55%{rotate:13deg;translate:0 0}78%{rotate:0deg;translate:0 -4px}100%{rotate:-13deg;translate:0 0}}
 @keyframes antFeel{from{rotate:-6deg}to{rotate:5deg}}
+/* Menu ant takes a few steps now and then; standing still the rest of the cycle, so there's nothing to redraw */
+.big.ant .ico .ta,.big.ant .ico .tb,.big.ant .ico .antn{transform-box:view-box}
+.big.ant .ico .ta{animation:menuStepA 4.8s linear infinite}
+.big.ant .ico .tb{animation:menuStepB 4.8s linear infinite}
+.big.ant .ico .antn{animation:menuFeel 4.8s ease-in-out infinite}
+@keyframes menuStepA{0%,27%,100%{rotate:0deg}3.4%{rotate:-13deg}10%{rotate:13deg}16.7%{rotate:-13deg}23.4%{rotate:13deg}}
+@keyframes menuStepB{0%,27%,100%{rotate:0deg}3.4%{rotate:13deg}10%{rotate:-13deg}16.7%{rotate:13deg}23.4%{rotate:-13deg}}
+@keyframes menuFeel{0%,27%,100%{rotate:0deg}9%{rotate:-7deg}19%{rotate:6deg}}
 @keyframes antBob{to{translate:0 -2%}}
 @keyframes munch{to{rotate:14deg}}
 .food{position:absolute;left:0;top:0;width:calc(var(--a) * .5);height:calc(var(--a) * .5);transform-origin:50% 100%}
@@ -467,6 +476,7 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
 }
 .overlay{pointer-events:none}
 .overlay.show{opacity:1;visibility:visible;pointer-events:auto}
+.overlay:not(.show) *,.overlay:not(.show) *::before,.overlay:not(.show) *::after{animation-play-state:paused !important}   /* hidden screens don't burn frames */
 /* Every card: grown-up pills in the top corners, the intro, big kid actions, and a quiet footer */
 .card{
   position:relative;z-index:1;background:var(--panel);color:var(--ink);

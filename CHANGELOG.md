@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.18.1 · 2026-10-01
+
+- Runs smoother and uses less battery
+- The ant on the menu takes a few steps now and then
+
 ## 1.18.0 · 2026-10-01
 
 - New "Feed the ants" mode: a hand drops real ant foods where you tap, one more food each level
