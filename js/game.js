@@ -1,6 +1,6 @@
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
-  const VERSION = "1.16.2";
+  const VERSION = "1.17.0";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION; });
@@ -164,9 +164,9 @@
     <circle cx="46" cy="41" r="3.2" fill="#fff" opacity=".55"/>
   </svg>`;
   const sizePts = sc => clamp(1 / sc, .85, 1.45);   // smaller fly is harder, so more points
-  let MODE = "kids";
+  let MODE = "kids", bfPick = false;
   const isCh = () => MODE === "challenge";
-  const LV = () => (isCh() ? CH_LEVELS : MODE === "butterflies" ? BF_LEVELS : LEVELS)[level];
+  const LV = () => (isCh() ? CH_LEVELS : MODE === "butterflies" ? (bfPick ? BF_LEVELS : BF_EASY) : LEVELS)[level];
   const num = n => Math.round(n).toLocaleString("en-US");   // same Western digits in both languages
 
   // ================= Elements =================
@@ -689,6 +689,13 @@
   // flowers: flowers on screen at once, each wanting one of those colours
   // (the rest have no flower); flies: most butterflies in the air at once, counting ones still flying away; speed px/s; per: butterflies per flower;
   // goal: flowers per level, a multiple of flowers
+  const BF_EASY = [
+    { pool: 3, colors: 1, flowers: 1, flies: 2, speed: 44, per: 2, goal: 3 },
+    { pool: 3, colors: 2, flowers: 2, flies: 3, speed: 48, per: 2, goal: 6 },
+    { pool: 3, colors: 1, flowers: 1, flies: 3, speed: 54, per: 3, goal: 4 },
+    { pool: 4, colors: 2, flowers: 2, flies: 3, speed: 58, per: 3, goal: 6 },
+    { pool: 4, colors: 2, flowers: 2, flies: 4, speed: 64, per: 3, goal: 6 },
+  ];
   const BF_LEVELS = [
     { pool: 3, colors: 1, flowers: 1, flies: 2, speed: 48, per: 2, goal: 3 },   // warm-up: every butterfly is right
     { pool: 3, colors: 2, flowers: 2, flies: 3, speed: 52, per: 2, goal: 6 },   // still every butterfly is right, each to its own flower
@@ -772,6 +779,7 @@
       <circle cx="60" cy="50" r="14" fill="#FFF3C4" stroke="${k.d}" stroke-width="2"/></svg>`;
   }
   document.querySelectorAll('[data-ico="butterfly"]').forEach(e => { e.innerHTML = butterflySVG(BF_COLORS[1]); });
+  document.querySelectorAll('[data-ico="flower"]').forEach(e => { e.innerHTML = gardenFlowerSVG(BF_COLORS[0]); });
 
   let bugs = [], bfCarries = [], bfOnClear = null, bfSpawnT = 0, bfFlowers = [], bfPartN = 1, bfSet = null, bfSeen = [], bfHintT = 0, B = 80, F = 140;
   // Every part of a stage picks random colours from its level's pool: the flowers' colours, then the ones with no flower.
@@ -1098,7 +1106,7 @@
     bfLater(() => {
       done.forEach((fl, i) => bfWilt(fl, i ? null : () => {
         const up = caughtInLevel >= LV().goal;
-        if (up && level >= BF_LEVELS.length - 1) { finish(); return; }
+        if (up && level >= (bfPick ? BF_LEVELS : BF_EASY).length - 1) { finish(); return; }
         const g = gen;
         bfWhenClear(() => {
           if (g !== gen || gameOver) return;
@@ -1592,7 +1600,8 @@
   });
   $("againBtn").addEventListener("click", () => startGame(MODE));
   $("beesBtn").addEventListener("click", () => startGame("bees"));
-  $("bfBtn").addEventListener("click", () => startGame("butterflies"));
+  $("bfBtn").addEventListener("click", () => { bfPick = false; startGame("butterflies"); });
+  $("bfPickBtn").addEventListener("click", () => { bfPick = true; startGame("butterflies"); });
   $("chAgain").addEventListener("click", () => startGame("challenge"));
   // ================= Install as app =================
   const installBtn = $("installBtn"), iosHint = $("iosHint");
@@ -1849,7 +1858,7 @@
   });
   // ================= Cards that fit =================
   // A card squeezes a step at a time until it fits the screen; only if it still can't does it scroll, with a big, friendly scrollbar
-  const FIT_STEPS = 3;
+  const FIT_STEPS = 4;
   const contentBottom = card => {   // from layout sizes, so entrance animations (transforms) don't count as overflow
     let b = 0;
     for (const el of card.children) if (!el.classList.contains("hold-hint")) b = Math.max(b, el.offsetTop + el.offsetHeight);
@@ -1908,7 +1917,7 @@
   function fitCards() {
     for (const f of fitters) {
       const card = f.card;
-      card.classList.remove("scrolls", "fit1", "fit2", "fit3");
+      card.classList.remove("scrolls", "fit1", "fit2", "fit3", "fit4");
       let n = 0;
       while (n < FIT_STEPS && overflows(card)) card.classList.add("fit" + ++n);
       const scroll = overflows(card);

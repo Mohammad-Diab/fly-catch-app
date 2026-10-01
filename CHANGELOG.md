@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.17.0 · 2026-10-01
+
+- Butterfly garden is now an easy mode: every butterfly is right
+- New "Watch the colours" mode: only butterflies that match the flower
+- Menu fits five buttons on small phones
+
 ## 1.16.2 · 2026-09-30
 
 - Butterfly wing sound now plays on phones

@@ -24,7 +24,7 @@ This is the checklist of what the game does and the rules behind it. When you ch
 
 ✅ supported · ⚪ deliberately different · — not applicable
 
-| Feature | 🪰 Flies | 🐝 Bees | 🦋 Butterflies | 🏆 Challenge |
+| Feature | 🪰 Flies | 🐝 Bees | 🦋 Butterflies (both modes) | 🏆 Challenge |
 |---|---|---|---|---|
 | Soft collisions (no overlap, bounce away) | ✅ | ✅ | ✅ | ✅ |
 | Varied insect sizes | ✅ | ✅ | ✅ | ✅ smaller |
@@ -34,7 +34,7 @@ This is the checklist of what the game does and the rules behind it. When you ch
 | Resting on the glass | ✅ | ✅ | ⚪ only on its flower | ✅ |
 | Catch animation | squash, sparkle, dizzy slide | same | ⚪ one quick upward scoop puts it inside the net's bag, then the net carries it and tips it onto the flower | same |
 | Several in one swing (combo) | ✅ | ✅ | ✅ every matching one under the net, up to what the flower still needs | ✅ with points |
-| Wrong tap | — | "هذه نحلة!" badge, red edge glow, "لاء" voice | "ليست هذه الفراشة!" badge, red edge glow, "لاء" voice; the butterfly flutters away and the flower nudges | — |
+| Wrong tap | — | "هذه نحلة!" badge, red edge glow, "لاء" voice | Watch the colours only: "ليست هذه الفراشة!" badge, red edge glow, "لاء" voice; the butterfly flutters away and the flower nudges | — |
 | Hint when the child is stuck | — | — | ✅ matching butterflies glow after 4 s | — |
 | Clouds | ✅ | ✅ | ⚪ clear sky | ✅ |
 
@@ -52,7 +52,19 @@ This is the checklist of what the game does and the rules behind it. When you ch
 7. **Colour-blind friendly.** Each butterfly colour wears a real butterfly's markings, repeated on the flower's petals, so matching also works by shape.
 8. **Counts are visible.** The flower's counter shows a number (`1/2`) and mini butterflies in the flower's colour.
 
-## Butterfly garden
+## Butterfly modes
+
+**Butterfly garden** (easy): every butterfly has a flower of its colour, so nothing is ever wrong.
+
+| Level | Flowers at once | Per flower | Most in the air | Flowers in the level |
+|---|---|---|---|---|
+| 1 | 1 | 2 | 2 | 3 |
+| 2 | 2 | 2 | 3 | 6 |
+| 3 | 1 | 3 | 3 | 4 |
+| 4 | 2 | 3 | 3 | 6 |
+| 5 | 2 | 3 | 4 | 6 |
+
+**Watch the colours** (choosing):
 
 | Level | Butterfly colours | Flowers at once | Colours with no flower | Most in the air | Per flower | Flowers in the level |
 |---|---|---|---|---|---|---|

@@ -470,6 +470,10 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .big.butterfly{background:#A77BF3;box-shadow:0 6px 0 #7C4FD0,0 14px 24px rgba(124,79,208,.28)}
 .big.butterfly:active{box-shadow:0 2px 0 #7C4FD0}
 .big.butterfly::after{animation-delay:4.4s}
+.big.bfpick{background:#FF6FA8;box-shadow:0 6px 0 #D6417F,0 14px 24px rgba(214,65,127,.28)}
+.big.bfpick:active{box-shadow:0 2px 0 #D6417F}
+.big.bfpick::after{animation-delay:5.6s}
+.big .ico .glow{opacity:0}
 /* A soft shine sweeps across now and then */
 .big::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.4) 50%,transparent 62%);
@@ -529,6 +533,7 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .overlay.show .card-actions > :nth-child(2){animation-delay:.32s}
 .overlay.show .card-actions > :nth-child(3){animation-delay:.44s}
 .overlay.show .card-actions > :nth-child(4){animation-delay:.56s}
+.overlay.show .card-actions > :nth-child(5){animation-delay:.68s}
 .overlay.show #startBtn{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both,breathe 2.6s ease-in-out 1.4s infinite}
 .overlay.show .card-foot,.overlay.show .card-top{animation:fadeIn .5s ease .5s both}
 @keyframes cardIn{from{opacity:0;translate:0 34px;scale:.92}}
@@ -565,6 +570,11 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .card:where(.fit3){--shrink:.5}
 :where(.card.fit3) .card-actions .big small{display:none}
 .card:where(.fit3) p{font-size:clamp(15px,3.4vmin,18px)}
+.card:where(.fit4){--shrink:.4;row-gap:6px}
+:where(.card.fit4) .card-actions{gap:7px}
+:where(.card.fit4) .big{font-size:19px;padding-block:.24em .3em}
+:where(.card.fit4) .chip.mode-alt{font-size:14px;padding-block:.24em .3em}
+.card:where(.fit4) h1{font-size:28px}
 
 /* Landscape screens too short for a stacked card (class set from JS): intro beside the actions */
 html.split-cards .card.split{width:min(96%,880px);grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
@@ -600,6 +610,7 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 #startBtn{view-transition-name:menu-play}
 #beesBtn{view-transition-name:menu-bees}
 #bfBtn{view-transition-name:menu-butterflies}
+#bfPickBtn{view-transition-name:menu-bfpick}
 #challengeBtn{view-transition-name:menu-challenge}
 .menu .card-top{view-transition-name:menu-top}
 .menu .card-foot{view-transition-name:menu-foot}

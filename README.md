@@ -12,7 +12,8 @@ A gentle fly-catching game for young kids. Tap a fly and a net swoops down to ca
 
 - **🪰 Let's play!** Catch the flies across five levels that get gradually faster. Made for ages 2–3.
 - **🐝 Watch the bees:** catch the flies but leave the bees alone while they sip from their flowers.
-- **🦋 Butterfly garden:** match colours without reading: each flower wants butterflies of its own colour, and every colour wears a real butterfly's markings so colour-blind kids can match by shape.
+- **🦋 Butterfly garden:** every butterfly flies to the flower of its own colour; nothing to get wrong.
+- **🌸 Watch the colours:** only the butterflies that match the flower may be caught. Every colour wears a real butterfly's markings, so colour-blind kids can match by shape.
 - **🏆 Challenge:** points, a timer, streak multipliers, combo catches and a saved best score.
 
 ## Features
