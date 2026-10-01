@@ -1,11 +1,11 @@
 // Offline support; keep VERSION in sync with js/game.js, or installed apps stay on the old version
-const VERSION = "1.17.1";
+const VERSION = "1.18.0";
 const CACHE = "fly-catch-" + VERSION;
-const FONTS = "fly-catch-fonts";          // kept across versions
 
 const CORE = [
   "./",
   "./index.html",
+  "./privacy.html",
   "./css/style.css",
   "./js/game.js",
   "./lang/ar.json",
@@ -15,6 +15,8 @@ const CORE = [
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
   "./icons/apple-touch-icon.png",
+  "./fonts/baloo-bhaijaan-2-arabic.woff2",
+  "./fonts/baloo-bhaijaan-2-latin.woff2",
 ];
 
 // Install: cache the whole game, straight from the network so a new version never picks up old files
@@ -26,7 +28,7 @@ self.addEventListener("install", e => {
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== FONTS).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -40,17 +42,6 @@ self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-
-  // Google Fonts: network the first time, then always from cache
-  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
-    e.respondWith(
-      caches.open(FONTS).then(c => c.match(req).then(hit => hit || fetch(req).then(res => {
-        if (res.ok || res.type === "opaque") c.put(req, res.clone());
-        return res;
-      }).catch(() => hit)))
-    );
-    return;
-  }
 
   if (url.origin !== location.origin) return;
 

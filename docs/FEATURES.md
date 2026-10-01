@@ -17,31 +17,33 @@ This is the checklist of what the game does and the rules behind it. When you ch
 | Languages | Arabic and English, no text in the HTML, right-to-left layouts mirror automatically. |
 | Scenes | Each mode has its own sky and ground, and the colours glide between them when a mode starts. |
 | Light | Clouds passing the sun dim the scenery slightly (not in the butterfly garden, which has a clear sky). |
-| Offline and updates | Installable app; every file is cached by `sw.js`. The app checks for a new version whenever it comes back on screen; when one is ready, an "Update the game" pill (press-and-hold) appears on the menu and reloads into it. |
+| Offline and updates | Installable app; every file is cached by `sw.js`. It is switched off on localhost so development reloads always show the latest files. The app checks for a new version whenever it comes back on screen; when one is ready, an "Update the game" pill (press-and-hold) appears on the menu and reloads into it. |
+| Privacy | `privacy.html`, in Arabic and English, linked quietly from the menu footer: the game collects nothing; only the language, best Challenge score, last What's new version and the offline copy stay on the device. Its big green button goes back to the game, so an installed app (no browser back button) never gets stuck there. Update its date and list whenever the game starts saving something new. |
+| What's new | Gift pill on the menu, next to the language pill (press-and-hold); it wiggles with a dot while there is a version the child hasn't seen. The screen shows one animated picture per version that changed something a child can see, newest first: tapping a picture makes it jump and plays that version's sound, ▶ starts that mode, and a twinkling star marks versions not seen yet. A short line under each picture is for grown-ups. Add an entry to `NEWS` in `js/game.js` (plus its text in both language files) for each release a child would notice. |
 | Reduced motion | Clouds, confetti, idle button motion, wing flapping and glows stop when the device asks for less motion. |
 
 ## Per mode
 
 ✅ supported · ⚪ deliberately different · — not applicable
 
-| Feature | 🪰 Flies | 🐝 Bees | 🦋 Butterflies (both modes) | 🏆 Challenge |
-|---|---|---|---|---|
-| Soft collisions (no overlap, bounce away) | ✅ | ✅ | ✅ | ✅ |
-| Varied insect sizes | ✅ | ✅ | ✅ | ✅ smaller |
-| Entering from the screen edges | ✅ | ✅ | ✅ | ✅ |
-| Wobbly, natural flight | ✅ buzzing zig-zag | ✅ | ✅ slow bobbing flutter | ✅ |
-| Stereo sound that follows each insect | ✅ buzz | ✅ hum | ✅ soft wing flutter, faster when scared or carried, quiet on its flower | ✅ |
-| Resting on the glass | ✅ | ✅ | ⚪ only on its flower | ✅ |
-| Catch animation | squash, sparkle, dizzy slide | same | ⚪ one quick upward scoop puts it inside the net's bag, then the net carries it and tips it onto the flower | same |
-| Several in one swing (combo) | ✅ | ✅ | ✅ every matching one under the net, up to what the flower still needs | ✅ with points |
-| Wrong tap | — | "هذه نحلة!" badge, red edge glow, "لاء" voice | Watch the colours only: "ليست هذه الفراشة!" badge, red edge glow, "لاء" voice; the butterfly flutters away and the flower nudges | — |
-| Hint when the child is stuck | — | — | ✅ matching butterflies glow after 4 s | — |
-| Clouds | ✅ | ✅ | ⚪ clear sky | ✅ |
+| Feature | 🪰 Flies | 🐝 Bees | 🦋 Butterflies (both modes) | 🐜 Ants | 🏆 Challenge |
+|---|---|---|---|---|---|
+| Soft collisions (no overlap, bounce away) | ✅ | ✅ | ✅ | — at most two ants out | ✅ |
+| Varied insect sizes | ✅ | ✅ | ✅ | ⚪ one size; nearer ants look bigger | ✅ smaller |
+| Entering from the screen edges | ✅ | ✅ | ✅ | ⚪ come out of the anthill | ✅ |
+| Wobbly, natural flight | ✅ buzzing zig-zag | ✅ | ✅ slow bobbing flutter | ⚪ walk with moving legs | ✅ |
+| Stereo sound that follows each insect | ✅ buzz | ✅ hum | ✅ soft wing flutter, faster when scared or carried, quiet on its flower | ⚪ drop, munch and home sounds | ✅ |
+| Resting on the glass | ✅ | ✅ | ⚪ only on its flower | — | ✅ |
+| Catch animation | squash, sparkle, dizzy slide | same | ⚪ one quick upward scoop puts it inside the net's bag, then the net carries it and tips it onto the flower | ⚪ no catching: the ant eats a bite and carries the rest home | same |
+| Several in one swing (combo) | ✅ | ✅ | ✅ every matching one under the net, up to what the flower still needs | — | ✅ with points |
+| Wrong tap | — | "هذه نحلة!" badge, red edge glow, "لاء" voice | Watch the colours only: "ليست هذه الفراشة!" badge, red edge glow, "لاء" voice; the butterfly flutters away and the flower nudges | — nothing is wrong; a third food just sparkles | — |
+| Hint when the child is stuck | — | — | ✅ matching butterflies glow after 4 s | ✅ an ant peeks out after 6 s, a hungry bubble after 12 s | — |
+| Clouds | ✅ | ✅ | ⚪ clear sky | ✅ | ✅ |
 
 ## Rules for toddlers (ages 2–4)
 
 1. **Nothing depends on reading.** Kid buttons carry pictures of the game's own insects; feedback is visual and audible.
-2. **Grown-up controls are protected.** Challenge, Install, Update and the language switch need a press-and-hold; a quick tap only wiggles the pill and shows a hint bubble.
+2. **Grown-up controls are protected.** Challenge, Install, Update, What's new and the language switch need a press-and-hold; a quick tap only wiggles the pill and shows a hint bubble.
 3. **Gentle feedback.** No scolding sounds except the "No!" warning, which teaches "not the bee" and "not this butterfly".
 4. **Difficulty rises in even steps.** Level 1 is the reference; each later level is one small step harder.
 5. **Keep the screen calm.**
@@ -84,6 +86,20 @@ Butterflies fly in one at a time, 1–1.8 s apart (at least 2 s after a catch), 
 | Purple | Purple emperor | White band and a small orange eyespot (levels 4–5 only) |
 
 Colours are bold and far apart so a two-year-old can tell them apart. No green (a green flower vanishes against the grass), and no orange or pink (too close to red and yellow). Level 5 needs four colours, so its flowers are red and yellow and the wrong butterflies are blue and purple, the only mix with no close pair. Petals and wings use the full colour rather than a pale tint.
+
+## Feed the ants
+
+The child taps the ground and food drops there. One ant comes out of the anthill, walks to it, takes a bite and carries the rest home. At most two foods are out at once, so there are never more than two ants on screen. Each food brought home earns a star, and the anthill grows a little with every level.
+
+| Level | New food | Stars |
+|---|---|---|
+| 1 | Sugar cube | 3 |
+| 2 | White bread | 4 |
+| 3 | Strawberry | 5 |
+| 4 | Apple | 6 |
+| 5 | Cookie | 6 |
+
+Every food is something real ants go for. A dropped food is any of the ones unlocked so far. Ants walk a little faster each level. With nothing to feed for 6 s an ant peeks out and looks around; after 12 s it comes out with a thought bubble of the level's new food and a tummy rumble.
 
 ## Adding a mode
 

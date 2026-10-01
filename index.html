@@ -10,11 +10,25 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="">
-<title></title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;800&display=swap" rel="stylesheet">
+<meta name="apple-mobile-web-app-title" content="صيد الذباب">
+<title>صيد الذباب · Fly Catcher</title>
+<meta name="description" content="لعبة للأطفال: اصطد الذباب، خذ كل فراشة إلى وردتها، وأطعم النمل. تعمل بدون إنترنت، بلا إعلانات. A game for kids: catch the flies, take each butterfly to its flower, and feed the ants. Works offline, no ads.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="صيد الذباب · Fly Catcher">
+<meta property="og:title" content="صيد الذباب · Fly Catcher">
+<meta property="og:description" content="لعبة للأطفال: اصطد الذباب، خذ كل فراشة إلى وردتها، وأطعم النمل. تعمل بدون إنترنت، بلا إعلانات. A game for kids: catch the flies, take each butterfly to its flower, and feed the ants. Works offline, no ads.">
+<meta property="og:url" content="https://mohammad-diab.github.io/fly-catch-app/">
+<meta property="og:image" content="https://mohammad-diab.github.io/fly-catch-app/icons/share.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="صيد الذباب · Fly Catcher: a fly, a butterfly on a flower, a bee and an ant with a sugar cube">
+<meta property="og:locale" content="ar_AR">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://mohammad-diab.github.io/fly-catch-app/">
+<link rel="preload" href="fonts/baloo-bhaijaan-2-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/baloo-bhaijaan-2-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -73,6 +87,7 @@
       <div class="card split menu">
         <div class="card-top">
           <button class="chip hold" id="langBtn" type="button"></button>
+          <button class="chip hold news" id="newsBtn" type="button"><i class="cico" data-ico="gift"></i><span data-i18n="newsBtn"></span></button>
         </div>
         <div class="card-intro">
           <div class="hero flying" id="heroFly"></div>
@@ -88,6 +103,9 @@
             <button class="big mode butterfly" id="bfBtn"><i class="ico" data-ico="butterfly"></i><span class="lbl"><span data-i18n="bfBtn"></span><small data-i18n="bfSub"></small></span></button>
             <button class="big alt bfpick" id="bfPickBtn" data-i18n-aria="bfPickBtn" data-i18n-title="bfPickSub"><i class="ico" data-ico="flower"></i></button>
           </div>
+          <div class="mode-row">
+            <button class="big mode ant" id="antBtn"><i class="ico" data-ico="ant"></i><span class="lbl"><span data-i18n="antBtn"></span><small data-i18n="antSub"></small></span></button>
+          </div>
           <button class="chip hold mode-alt" id="challengeBtn" type="button"><i class="cico" data-ico="trophy"></i><span data-i18n="chBtn"></span><small data-i18n="chSub"></small></button>
         </div>
         <div class="card-foot">
@@ -95,9 +113,26 @@
           <button class="chip hold accent" id="installBtn" type="button" hidden><i class="cico" data-ico="download"></i><span data-i18n="install"></span></button>
           <p class="ios-hint" id="iosHint" hidden data-i18n="iosHint"></p>
           <p class="ios-hint" id="silentHint" hidden data-i18n="silentHint"></p>
-          <span class="ver" dir="ltr"></span>
+          <div class="foot-line"><span class="ver" dir="ltr"></span><span class="sep" aria-hidden="true">·</span><a class="plink" href="privacy.html" data-i18n="privacy"></a></div>
+          <span class="credit" dir="ltr">© 2026 KOD by Mohammad™</span>
         </div>
         <p class="hold-hint" id="holdHint" data-i18n="holdHint"></p>
+      </div>
+    </section>
+
+    <section class="overlay" id="newsScreen">
+      <div class="card news">
+        <div class="card-top">
+          <button class="chip" id="newsBack" type="button" data-i18n="back"></button>
+        </div>
+        <div class="card-intro">
+          <div class="gift" aria-hidden="true" data-ico="gift"></div>
+          <h2 data-i18n="newsTitle"></h2>
+        </div>
+        <div class="card-actions" id="newsList"></div>
+        <div class="card-foot">
+          <span class="ver" dir="ltr"></span>
+        </div>
       </div>
     </section>
 

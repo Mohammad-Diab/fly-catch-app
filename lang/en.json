@@ -12,6 +12,8 @@
   "bfSub": "Each butterfly to its flower",
   "bfPickBtn": "Watch the colours",
   "bfPickSub": "Only butterflies that match the flower",
+  "antBtn": "Feed the ants",
+  "antSub": "Tap the ground to drop food",
   "chBtn": "Challenge",
   "chSub": "Points & timer",
   "holdHint": "Press and hold",
@@ -19,6 +21,7 @@
   "update": "Update the game",
   "iosHint": "To install: tap Share, then “Add to Home Screen”",
   "silentHint": "🔕 No sound? Make sure your device isn't on silent",
+  "privacy": "Privacy",
 
   "level": "Level",
   "levelN": "Level {n}",
@@ -40,6 +43,7 @@
   "wellDone": "Well done!",
   "allCaught": "You caught all the flies",
   "allBf": "Every butterfly found its flower",
+  "allAnts": "All the ants are full!",
   "again": "Play again",
   "back": "Back to start",
 
@@ -52,5 +56,23 @@
   "pct": "{n}%",
   "bestStreak": "Best streak",
   "reached": "Level reached",
-  "bonus": "Time bonus"
+  "bonus": "Time bonus",
+
+  "newsBtn": "What's new",
+  "newsTitle": "What's new",
+  "play": "Play",
+  "newsOlder": "Earlier",
+  "news1180": "Feed the ants",
+  "news1170": "Watch the colours",
+  "news1160": "Two flowers at once",
+  "news1150": "Butterfly garden",
+  "news1145": "Big picture buttons",
+  "news1130": "Pause button",
+  "news1120": "Clouds cover the sun",
+  "news1110": "English too",
+  "news1090": "Bees visit flowers",
+  "news1060": "Watch the bees",
+  "news1040": "Challenge",
+  "news1030": "Several flies at once",
+  "news1000": "Catch the flies"
 }

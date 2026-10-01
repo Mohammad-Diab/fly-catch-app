@@ -1,21 +1,115 @@
 {
   "name": "صيد الذباب · Fly Catcher",
   "short_name": "صيد الذباب",
-  "description": "لعبة صيد ذباب للأطفال — Fly catching game for kids",
+  "description": "لعبة للأطفال: اصطد الذباب، خذ كل فراشة إلى وردتها، وأطعم النمل — A game for kids: catch the flies, take each butterfly to its flower, and feed the ants",
   "lang": "ar",
   "dir": "rtl",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
   "orientation": "any",
   "background_color": "#8A5327",
   "theme_color": "#8A5327",
-  "categories": ["games", "kids", "education"],
+  "categories": [
+    "games",
+    "kids",
+    "education"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/wide-menu.webp",
+      "sizes": "1920x1200",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "القائمة: اختر لعبة"
+    },
+    {
+      "src": "screenshots/wide-flies.webp",
+      "sizes": "1920x1200",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "اصطد الذباب بالشبكة"
+    },
+    {
+      "src": "screenshots/wide-butterflies.webp",
+      "sizes": "1920x1200",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "خذ كل فراشة إلى وردتها"
+    },
+    {
+      "src": "screenshots/wide-ants.webp",
+      "sizes": "1920x1200",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "أطعم النمل"
+    },
+    {
+      "src": "screenshots/wide-news.webp",
+      "sizes": "1920x1200",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "ما الجديد في كل إصدار"
+    },
+    {
+      "src": "screenshots/narrow-menu.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "القائمة: اختر لعبة"
+    },
+    {
+      "src": "screenshots/narrow-flies.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "اصطد الذباب بالشبكة"
+    },
+    {
+      "src": "screenshots/narrow-butterflies.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "خذ كل فراشة إلى وردتها"
+    },
+    {
+      "src": "screenshots/narrow-ants.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "أطعم النمل"
+    },
+    {
+      "src": "screenshots/narrow-news.webp",
+      "sizes": "780x1688",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "ما الجديد في كل إصدار"
+    }
   ]
 }

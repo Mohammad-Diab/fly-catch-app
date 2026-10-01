@@ -1,9 +1,13 @@
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
-  const VERSION = "1.17.1";
+  const VERSION = "1.18.0";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
-  document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION; });
+  // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
+  const BUILD = 32;
+  const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
+  const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
+  document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
 
   // ================= Graphics =================
   const FLY_SVG = `
@@ -87,10 +91,28 @@
   <circle cx="111.1" cy="51.3" r="4.5" fill="#4F8FC4"/>
 </svg>`;
 
+  const HAND_SVG = `<svg viewBox="0 0 200 200" aria-hidden="true"><text x="100" y="118" font-size="100" text-anchor="middle">\u{1FAF3}</text></svg>`;
+  const HAND_OK = (() => {
+    try {
+      const c = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+      c.canvas.width = c.canvas.height = 20; c.font = "16px sans-serif"; c.textBaseline = "top"; c.fillText("\u{1FAF3}", 0, 0);
+      const d = c.getImageData(0, 0, 20, 20).data;
+      for (let i = 0; i < d.length; i += 4) if (d[i + 3] && Math.max(d[i], d[i + 1], d[i + 2]) - Math.min(d[i], d[i + 1], d[i + 2]) > 40) return true;
+    } catch {}
+    return false;
+  })();
+
   const DOWNLOAD_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M7 10l5 5 5-5"/><path d="M4.5 20h15"/></svg>`;
 
   const REFRESH_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.5 4v5h-5"/></svg>`;
   const TROPHY_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z" fill="currentColor" fill-opacity=".25"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.8 3.9M16 6h2.5a2.5 2.5 0 0 1-2.8 3.9"/><path d="M12 13v4M9 20.5h6M10 17h4"/></svg>`;
+
+  const GIFT_SVG = `<svg viewBox="0 0 64 64" aria-hidden="true">
+  <g class="lid"><path d="M32 17C27 6 15 7 17 14C19 20 28 19 32 17Z" fill="#FF6B8A" stroke="#C93C5E" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M32 17C37 6 49 7 47 14C45 20 36 19 32 17Z" fill="#FF6B8A" stroke="#C93C5E" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="7" y="17" width="50" height="12" rx="3" fill="#FFC93C" stroke="#D9921B" stroke-width="2"/><rect x="28" y="17" width="8" height="12" fill="#FF6B8A"/></g>
+  <rect x="11" y="29" width="42" height="28" rx="3" fill="#FFD54A" stroke="#D9921B" stroke-width="2"/><rect x="28" y="29" width="8" height="28" fill="#FF6B8A"/>
+</svg>`;
 
   const STAR_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>`;
 
@@ -166,7 +188,7 @@
   const sizePts = sc => clamp(1 / sc, .85, 1.45);   // smaller fly is harder, so more points
   let MODE = "kids", bfPick = false;
   const isCh = () => MODE === "challenge";
-  const LV = () => (isCh() ? CH_LEVELS : MODE === "butterflies" ? (bfPick ? BF_LEVELS : BF_EASY) : LEVELS)[level];
+  const LV = () => (isCh() ? CH_LEVELS : MODE === "butterflies" ? (bfPick ? BF_LEVELS : BF_EASY) : MODE === "ants" ? ANT_LEVELS : LEVELS)[level];
   const num = n => Math.round(n).toLocaleString("en-US");   // same Western digits in both languages
 
   // ================= Elements =================
@@ -176,7 +198,7 @@
   const startScreen = $("startScreen"), endScreen = $("endScreen");
   const muteBtn = $("mute");
   $("heroFly").innerHTML = FLY_SVG;
-  const ICONS = { fly: FLY_SVG, bee: BEE_SVG, download: DOWNLOAD_SVG, refresh: REFRESH_SVG, trophy: TROPHY_SVG };
+  const ICONS = { fly: FLY_SVG, bee: BEE_SVG, download: DOWNLOAD_SVG, refresh: REFRESH_SVG, trophy: TROPHY_SVG, gift: GIFT_SVG };
   document.querySelectorAll("[data-ico]").forEach(e => { if (ICONS[e.dataset.ico]) e.innerHTML = ICONS[e.dataset.ico]; });
 
   const rand  = (a, b) => a + Math.random() * (b - a);
@@ -195,8 +217,8 @@
     if (isCh()) NET_R = Math.max(40, NET_R * CH.net);
     TOP_PAD = hud.getBoundingClientRect().height + 12;   // includes CSS zoom on large screens
     glass.style.setProperty("--fly", S + "px");
+    bfMeasure(); bfLayout(); antMeasure();
     sizeNet(cursorNet);
-    bfMeasure(); bfLayout();
     fitCards();
   }
   function bounds(h = S * 0.5) {
@@ -280,18 +302,16 @@
         const osc = (type, f) => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; nodes.push(o); return o; };
         const trem = ctx.createGain(); trem.gain.value = 1;
         let beat = null;
-        if (kind === "butterfly") {   // a soft, low puff of air with each wing beat; the hiss is filtered out so it never sounds like a broom
+        if (kind === "butterfly") {   // a soft puff of air with each wing beat, mostly in the range laptop and phone speakers can play
           const n = ctx.createBufferSource(); n.buffer = noiseBuf; n.loop = true; n.loopStart = Math.random() * .5; nodes.push(n);
-          const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 300 + Math.random() * 80; bp.Q.value = 1.3;
-          const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 520; lp.Q.value = .5;
-          const lowG = ctx.createGain(); lowG.gain.value = .6;
-          const mid = ctx.createBiquadFilter(); mid.type = "bandpass"; mid.frequency.value = 1000 + Math.random() * 250; mid.Q.value = 2.5;
-          const midG = ctx.createGain(); midG.gain.value = .35;
-          n.connect(mid); mid.connect(midG); midG.connect(trem);
-          trem.gain.value = .45;
-          beat = osc("sine", 2.9); const bg = ctx.createGain(); bg.gain.value = .45;   // wings flap about 3 times a second
+          const filter = (type, f, q) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
+          const layer = (g, ...chain) => { const v = ctx.createGain(); v.gain.value = g; chain.reduce((a, b) => (a.connect(b), b), n).connect(v); v.connect(trem); };
+          layer(1, filter("bandpass", 1000 + Math.random() * 120, .9));   // the main puff
+          layer(.35, filter("bandpass", 2400, 1.4));   // a little air on top
+          layer(.3, filter("bandpass", 300 + Math.random() * 80, 1.3), filter("lowpass", 520, .5));   // body, for headphones
+          trem.gain.value = .5;
+          beat = osc("sine", 2.9); const bg = ctx.createGain(); bg.gain.value = .5;   // wings flap about 3 times a second
           beat.connect(bg); bg.connect(trem.gain);
-          n.connect(bp); bp.connect(lp); lp.connect(lowG); lowG.connect(trem);
         } else if (kind === "bee") {
           const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 850; lp.Q.value = .8;
           const pk = ctx.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = 300; pk.gain.value = 6;
@@ -354,7 +374,16 @@
       bfCatch() { tone(784, .18, "triangle", .15); tone(1175, .26, "triangle", .13, .08); },
       bfLand()  { tone(1568, .35, "sine", .06); tone(2093, .4, "sine", .04, .08); },
       bfWrong() { tone(392, .3, "sine", .07, 0, 330); },
+      no()      {   // a friendly "nuh-uh": a short high note, then a lower one that sags
+        tone(523, .13, "triangle", .2, 0, 466); tone(523, .13, "square", .045, 0, 466);
+        tone(392, .28, "triangle", .2, .17, 330); tone(392, .28, "square", .045, .17, 330);
+      },
       bfBloom() { tone(523, .22, "sine", .08, 0, 784); tone(784, .26, "sine", .06, .1, 1046); },
+      antDrop() { tone(620, .1, "sine", .07, 0, 360); noise(.06, 900, 500, .05); },
+      antMunch() { noise(.09, 2400, 1300, .09); tone(330, .06, "triangle", .05, .02); },
+      antHome() { tone(880, .12, "triangle", .12); tone(1175, .2, "triangle", .1, .09); },
+      antPeek() { tone(990, .09, "sine", .05, 0, 1320); },
+      antRumble() { tone(240, .45, "triangle", .08, 0, 160); tone(200, .4, "triangle", .07, .4, 140); },
       bfDone()  { [659, 784, 988, 1319].forEach((f, i) => tone(f, .22, "triangle", .15, i * .09)); },
       bloom()   { tone(660, .2, "sine", .07, 0, 990); tone(990, .24, "sine", .05, .09, 1320); },
       uiOn()    { tone(660, .08, "triangle", .12, .06); tone(990, .12, "triangle", .12, .13); },
@@ -372,43 +401,18 @@
     };
   })();
 
-  // ================= "No!" voice on a bee hit =================
-  // Embedded recording: no TTS and works offline
-  const LAA_MP3 = "data:audio/mpeg;base64,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";
-  // Skips while the previous clip is still playing, to avoid overlap
+  // ================= "No!" on a bee hit =================
+  // A short synthesized "nuh-uh" in every language; skips while the last one is still sounding, to avoid overlap
   const miss = (() => {
-    let buf = null, loading = null, last = -Infinity, lastAny = -Infinity, src = null;
-    const gap = () => (buf ? buf.duration * 1000 : 1080) + 150;
-    function load() {
-      if (buf || loading || !sfx.ctx()) return loading;
-      const bin = atob(LAA_MP3.split(",")[1]);
-      const bytes = new Uint8Array(bin.length);
-      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      loading = new Promise(res => {
-        sfx.ctx().decodeAudioData(bytes.buffer, b => { buf = b; res(b); }, () => res(null));
-      });
-      return loading;
-    }
+    let last = -Infinity;
     return {
-      load,
-      say() {
-        if (muted) return;
-        const now = performance.now();
-        if (now - lastAny < gap()) return;
-        last = lastAny = now;
-        if (!buf) { load(); sfx.aww(); return; }
-        src = sfx.play(buf, .95);
-      },
       sayNow() {
         if (muted) return;
         const now = performance.now();
-        if (now - lastAny < gap()) return;
-        last = lastAny = now;
-        if (LANG !== "ar") { sfx.aww(); return; }   // recording is Arabic only; plays a tone in English
-        if (!buf) { load(); sfx.aww(); return; }
-        src = sfx.play(buf, .95);
+        if (now - last < 600) return;
+        last = now;
+        sfx.no();
       },
-      stop()  { try { if (src) src.stop(); } catch (e) {} src = null; },
       reset() { last = -Infinity; },
     };
   })();
@@ -1124,7 +1128,7 @@
     b.state = "flee"; b.fleeT = .7; b.el.classList.add("flee");
     b.heading = b.target = Math.atan2(b.y - py, b.x - px) + rand(-.3, .3);
   }
-  // A colour with no flower gets the same clear "No!" as a bee: badge, red edge glow and the voice
+  // A colour with no flower gets the same clear "No!" as a bee: badge, red edge glow and the "nuh-uh" sound
   function bfWrong(b, px, py) {
     bfShoo(b, px, py);
     bfFlowers.forEach(fl => { const e = fl.el; e.classList.remove("nudge"); void e.offsetWidth; e.classList.add("nudge"); });
@@ -1155,19 +1159,277 @@
     bugs = []; bfCarries = []; bfOnClear = null; bfFlowers = []; bfSet = null; bfSeen = [];
   }
 
+  // ================= Feed the ants =================
+  const ANT_LEVELS = [
+    { speed: 140, goal: 3, foods: 1, flies: 2 },
+    { speed: 150, goal: 4, foods: 2, flies: 2 },
+    { speed: 160, goal: 5, foods: 3, flies: 2 },
+    { speed: 170, goal: 6, foods: 4, flies: 2 },
+    { speed: 180, goal: 6, foods: 5, flies: 2 },
+  ];
+  const ANT_MAX_FOOD = 2, ANT_PEEK_AFTER = 6, ANT_HUNGRY_AFTER = 12;
+  const ANT_SVG = `<svg viewBox="0 0 120 80" aria-hidden="true">
+  <g stroke="#8A3A22" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".65">
+    <path class="tb" style="transform-origin:73px 47px" d="M73 47L88 39L100 69"/>
+    <path class="ta" style="transform-origin:68px 48px" d="M68 48L76 39L81 70"/>
+    <path class="tb" style="transform-origin:64px 47px" d="M64 47L56 37L50 69"/></g>
+  <g stroke="#5A2414" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path class="ta" style="transform-origin:71px 48px" d="M71 48L83 37L92 71"/>
+    <path class="tb" style="transform-origin:67px 49px" d="M67 49L70 38L73 72"/>
+    <path class="ta" style="transform-origin:63px 48px" d="M63 48L50 35L39 70"/></g>
+  <ellipse cx="32" cy="44" rx="23" ry="18" fill="#C9542F" stroke="#7A2C18" stroke-width="2.5"/>
+  <ellipse cx="25" cy="37" rx="9" ry="5" fill="#fff" opacity=".28"/>
+  <circle cx="56" cy="45" r="6" fill="#B84A29" stroke="#7A2C18" stroke-width="2.2"/>
+  <ellipse cx="67" cy="43" rx="11" ry="9" fill="#C9542F" stroke="#7A2C18" stroke-width="2.5"/>
+  <g class="head">
+    <g class="antn" style="transform-origin:89px 22px"><path d="M86 22Q82 8 72 5M93 21Q100 7 111 8" stroke="#5A2414" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="72" cy="5" r="3.4" fill="#5A2414"/><circle cx="111" cy="8" r="3.4" fill="#5A2414"/></g>
+    <circle cx="90" cy="35" r="17" fill="#D45E35" stroke="#7A2C18" stroke-width="2.5"/>
+    <circle cx="96" cy="31" r="6.5" fill="#fff"/><circle cx="98" cy="31.5" r="3.6" fill="#2B1A14"/><circle cx="99.3" cy="30" r="1.3" fill="#fff"/>
+    <circle cx="99" cy="42" r="3.6" fill="#FF8FA3" opacity=".6"/>
+    <path d="M91 43Q96 47 101 44" stroke="#5A2414" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
+</svg>`;
+  const PEEK_SVG = `<svg viewBox="0 0 100 130" aria-hidden="true">
+  <ellipse cx="50" cy="112" rx="19" ry="16" fill="#C9542F" stroke="#7A2C18" stroke-width="2.5"/>
+  <g class="antn" style="transform-origin:50px 40px"><path d="M40 34Q32 14 20 10M60 34Q68 14 80 10" stroke="#5A2414" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <circle cx="20" cy="10" r="4" fill="#5A2414"/><circle cx="80" cy="10" r="4" fill="#5A2414"/></g>
+  <circle cx="50" cy="62" r="30" fill="#D45E35" stroke="#7A2C18" stroke-width="2.5"/>
+  <circle cx="39" cy="56" r="9" fill="#fff"/><circle cx="61" cy="56" r="9" fill="#fff"/>
+  <g class="eyes"><circle cx="39" cy="57" r="4.6" fill="#2B1A14"/><circle cx="61" cy="57" r="4.6" fill="#2B1A14"/>
+    <circle cx="40.6" cy="55.2" r="1.6" fill="#fff"/><circle cx="62.6" cy="55.2" r="1.6" fill="#fff"/></g>
+  <circle cx="31" cy="70" r="4.5" fill="#FF8FA3" opacity=".6"/><circle cx="69" cy="70" r="4.5" fill="#FF8FA3" opacity=".6"/>
+  <path d="M42 74Q50 80 58 74" stroke="#5A2414" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+</svg>`;
+  const HILL_SVG = `<svg viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
+  <g fill="#5FA84A"><path d="M14 66Q12 48 6 40Q16 50 18 64Z"/><path d="M20 66Q22 46 30 36Q24 50 25 66Z"/><path d="M26 68Q32 54 40 50Q32 58 31 68Z"/>
+    <path d="M186 64Q190 48 196 42Q186 52 182 64Z"/><path d="M178 66Q176 48 168 40Q174 52 173 66Z"/></g>
+  <path d="M34 44Q40 26 70 24Q86 16 104 22Q126 16 142 26Q166 28 168 44Q170 60 140 64Q118 70 98 66Q76 70 58 64Q32 60 34 44Z" fill="#C08049"/>
+  <path d="M46 44Q52 32 76 31Q100 26 124 31Q150 34 154 44Q150 54 124 57Q100 61 76 57Q50 54 46 44Z" fill="#A86C3B"/>
+  <ellipse cx="100" cy="40" rx="34" ry="13" fill="#6B4224"/>
+  <ellipse cx="100" cy="38" rx="26" ry="9" fill="#2A180C"/>
+  <g fill="#D9A56E"><circle cx="44" cy="34" r="2.4"/><circle cx="60" cy="22" r="2"/><circle cx="150" cy="24" r="2.2"/><circle cx="164" cy="36" r="2"/><circle cx="52" cy="58" r="2.2"/><circle cx="148" cy="58" r="2.4"/><circle cx="96" cy="64" r="2"/><circle cx="122" cy="20" r="1.8"/></g>
+  <g fill="#8E5A30"><circle cx="70" cy="30" r="1.8"/><circle cx="132" cy="32" r="2"/><circle cx="66" cy="52" r="1.8"/><circle cx="136" cy="52" r="1.8"/><circle cx="84" cy="24" r="1.6"/><circle cx="116" cy="60" r="1.6"/></g>
+  <ellipse cx="160" cy="70" rx="13" ry="8" fill="#A9A39A"/><ellipse cx="157" cy="67" rx="5" ry="2.5" fill="#fff" opacity=".35"/>
+</svg>`;
+  const FOODS = [
+    `<svg viewBox="0 0 60 60" aria-hidden="true"><g stroke="#AEB8C4" stroke-width="2" stroke-linejoin="round"><path d="M30 13L51 23L30 33L9 23Z" fill="#fff"/><path d="M9 23L30 33L30 53L9 43Z" fill="#EEF2F6"/><path d="M51 23L30 33L30 53L51 43Z" fill="#DCE3EB"/></g><g fill="#C9D3DE"><circle cx="24" cy="21" r="1.3"/><circle cx="34" cy="25" r="1.3"/><circle cx="30" cy="18" r="1.1"/><circle cx="16" cy="34" r="1.2"/><circle cx="21" cy="42" r="1.2"/><circle cx="39" cy="38" r="1.2"/><circle cx="44" cy="31" r="1.2"/></g></svg>`,
+    `<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M12 51V27C5 25 5 12 16 10C22 3 38 3 44 10C55 12 55 25 48 27V51Z" fill="#C98A4B" stroke="#9C6331" stroke-width="2" stroke-linejoin="round"/><path d="M16 47V24C11 22 11 15 18 14C23 8 37 8 42 14C49 15 49 22 44 24V47Z" fill="#FFF4DC"/><g fill="#EBD9B0"><ellipse cx="24" cy="24" rx="2" ry="1.4"/><ellipse cx="35" cy="20" rx="1.8" ry="1.2"/><ellipse cx="30" cy="32" rx="2" ry="1.4"/><ellipse cx="22" cy="39" rx="1.6" ry="1.1"/><ellipse cx="38" cy="38" rx="1.8" ry="1.2"/></g></svg>`,
+    `<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M30 54Q10 40 12 25Q14 15 30 17Q46 15 48 25Q50 40 30 54Z" fill="#F0384A" stroke="#B3162A" stroke-width="2.5"/><g fill="#FFE08A"><circle cx="22" cy="28" r="1.6"/><circle cx="32" cy="26" r="1.6"/><circle cx="40" cy="31" r="1.6"/><circle cx="26" cy="38" r="1.6"/><circle cx="35" cy="40" r="1.6"/></g><path d="M18 19L30 10L42 19L34 18L30 14L26 18Z" fill="#3FAE4A"/></svg>`,
+    `<svg viewBox="0 0 60 60" aria-hidden="true" style="--bx:90%;--by:50%;--br:22%"><path d="M7 30A23 23 0 0 0 53 30Z" fill="#FFF3CF" stroke="#E3383A" stroke-width="4" stroke-linejoin="round"/><g fill="#5A3418"><ellipse cx="25" cy="38" rx="2" ry="3"/><ellipse cx="35" cy="38" rx="2" ry="3"/></g></svg>`,
+    `<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="32" r="20" fill="#D9A15B" stroke="#A86F2E" stroke-width="2.5"/><g fill="#5A3418"><circle cx="22" cy="26" r="3"/><circle cx="36" cy="24" r="2.6"/><circle cx="38" cy="38" r="3"/><circle cx="24" cy="40" r="2.6"/></g></svg>`,
+  ];
+  document.querySelectorAll('[data-ico="ant"]').forEach(e => { e.innerHTML = ANT_SVG; });
+
+  let ants = [], foods = [], A = 90, antHill = { x: 0, y: 0 }, antG = { top: 0, bot: 0 }, antHillEl = null, antGroundEl = null;
+  let antIdle = 0, antPeeked = false, antPeekEls = null, antQueue = [], antClock = 0, antNextOut = 0;
+  const antScale = y => .82 + .28 * clamp((y - antG.top) / Math.max(1, antG.bot - antG.top), 0, 1);
+  function antMeasure() {
+    A = S * 1.3;
+    glass.style.setProperty("--a", A + "px");
+    antG = { top: Math.max(TOP_PAD + A, H * .56), bot: H - A * .3 };
+    const grow = 1 + (MODE === "ants" ? level : 0) * .08, hw = A * 2.1 * grow, hh = A * .95 * grow, base = antG.top + hh * .8;
+    const rtl = document.documentElement.dir === "rtl", x = rtl ? W - hw / 2 - A * .2 : hw / 2 + A * .2;
+    antHill = { x, y: base - hh * .62, w: hw, h: hh };
+    if (antHillEl) {
+      antHillEl.style.width = hw + "px"; antHillEl.style.height = hh + "px";
+      antHillEl.style.transform = `translate(${x - hw / 2}px,${base - hh}px)`;
+    }
+    if (antGroundEl) antGroundEl.style.top = antG.top - A * .55 + "px";
+    if (antPeekEls) antPlacePeek();
+    ants.forEach(antDraw); foods.forEach(antDrawFood);
+  }
+  function antStart() {
+    antGroundEl = document.createElement("div"); antGroundEl.className = "antground";
+    antHillEl = document.createElement("div"); antHillEl.className = "anthill"; antHillEl.innerHTML = `<div class="in">${HILL_SVG}</div>`;
+    flora.append(antGroundEl, antHillEl);
+    antIdle = 0; antPeeked = false;
+    antMeasure();
+    const gTop = antG.top - A * .55, gH = H * 1.04 - gTop;
+    for (let n = 0, tries = 0; n < 14 && tries < 200; tries++) {
+      const x = rand(W * .04, W * .96), y = rand(antG.top - A * .15, H - A * .15);
+      if (Math.abs(x - antHill.x) < antHill.w * .62 && y < antHill.y + antHill.h * .7) continue;
+      const t = document.createElement("i");
+      t.className = n % 5 === 4 ? "tuft bloom" : "tuft";
+      t.style.left = (x + W * .1) / (W * 1.2) * 100 + "%"; t.style.top = (y - gTop) / gH * 100 + "%";
+      t.style.setProperty("--k", rand(.75, 1.3).toFixed(2));
+      antGroundEl.appendChild(t); n++;
+    }
+  }
+  function antClear() {
+    ants.forEach(a => a.el.remove()); foods.forEach(f => f.el.remove()); antHidePeek();
+    ants = []; foods = []; antQueue = []; antClock = antNextOut = 0; antHillEl = antGroundEl = null; antIdle = 0; antPeeked = false;
+  }
+  function antTap(px, py) {
+    let max = ANT_MAX_FOOD;
+    if (level === ANT_LEVELS.length - 1) max = Math.min(max, LV().goal - caughtInLevel);
+    if (foods.length >= max) { burst(px, py, S * .35); return null; }
+    antIdle = 0; antPeeked = false; antHidePeek();
+    let x = clamp(px, A * .5, W - A * .5);
+    const y = clamp(py + A * 1.2, antG.top, antG.bot), dx = x - antHill.x, dy = (y - antHill.y) / .55;
+    if (Math.hypot(dx, dy) < antHill.w * .45) x = antHill.x + (dx < 0 ? -1 : 1) * antHill.w * .55;
+    const f = { x, y, el: document.createElement("div"), ant: null, carried: false };
+    f.el.className = "food"; f.el.innerHTML = `<div class="in">${pick(FOODS.slice(0, LV().foods))}</div>`;
+    flora.appendChild(f.el); antDrawFood(f);
+    foods.push(f);
+    const k = antScale(y), fall = Math.max(0, (y - py) / k - A * .25);
+    f.el.firstElementChild.animate([{ transform: `translate(${(px - x) / k}px,${-fall}px)` }, { transform: "none" }],
+      { duration: 240 + fall * .5, delay: 200, fill: "backwards", easing: "cubic-bezier(.5,0,.85,.55)" }).onfinish = () => {
+      if (!f.el.isConnected) return;
+      f.el.classList.add("landed"); sfx.antDrop(); antSend(f);
+    };
+    return { x: px, y: y - k * (fall + A * .25) };
+  }
+  function antSend(f) {
+    if (gameOver || !running) return;
+    antQueue.push(f);
+  }
+  function antEmerge(f) {
+    const el = document.createElement("div");
+    el.className = "ant"; el.innerHTML = `<div class="flip">${ANT_SVG}</div>`;
+    layer.appendChild(el);
+    const a = { el, flip: el.firstElementChild, x: antHill.x, y: antHill.y, food: f, state: "out", t: 0, s: 0, tilt: 0,
+      face: f.x < antHill.x ? -1 : 1 };
+    f.ant = a; ants.push(a); antDraw(a);
+  }
+  function antDraw(a) {
+    a.el.style.transform = `translate3d(${a.x - A / 2}px,${a.y - A * .667}px,0) scale(${antScale(a.y) * a.s})`;
+    a.el.style.zIndex = Math.round(a.y);
+    a.flip.style.transform = `scaleX(${a.face}) rotate(${a.tilt}deg)`;
+  }
+  function antDrawFood(f) {
+    const z = A * .5, k = antScale(f.carried ? f.ant.y : f.y) * (f.carried ? .85 : 1) * (f.s ?? 1);
+    f.el.style.transform = `translate3d(${f.x - z / 2}px,${f.y - z}px,0) scale(${k})`;
+    if (f.carried) f.el.style.zIndex = Math.round(f.ant.y) + 2;
+  }
+  const ANT_SNIFF = .7, ANT_CHEW = .7, ANT_GAP = 2;
+  const antSetPose = (a, pose) => {
+    a.el.classList.remove("walk", "sniff", "bite"); if (pose) a.el.classList.add(pose);
+    a.food.el.classList.toggle("bob", !!a.food.carried && pose === "walk");
+  };
+  function antStep(dt) {
+    const sp = LV().speed * clamp(MIN / 700, .7, 1.2);
+    antClock += dt;
+    const holeBusy = () => ants.some(a => a.state === "out" || a.state === "in");
+    if (antQueue.length && running && !holeBusy() && antClock >= antNextOut) { antEmerge(antQueue.shift()); antNextOut = antClock + ANT_GAP; }
+    for (const a of ants.slice()) {
+      a.t += dt;
+      if (a.ghost > 0) a.ghost -= dt;
+      const f = a.food;
+      if (a.state === "out") {
+        a.s = Math.min(1, a.t / .35);
+        if (a.s >= 1) { a.state = "walk"; antSetPose(a, "walk"); }
+      } else if (a.state === "walk" || a.state === "home" || a.state === "wait") {
+        if (a.state === "wait") {
+          if (!holeBusy()) { a.state = "home"; antSetPose(a, "walk"); }
+        } else {
+          const tx = a.state === "walk" ? f.x - a.face * A * .36 : antHill.x, ty = a.state === "walk" ? f.y : antHill.y;
+          const dx = tx - a.x, dy = ty - a.y, d = Math.hypot(dx, dy), step = sp * antScale(a.y) * dt;
+          if (a.goal !== a.state) { a.goal = a.state; a.best = d; a.stuck = 0; }
+          if (d < a.best - 2) { a.best = d; a.stuck = 0; }
+          else if ((a.stuck += dt) > 1.2) { a.ghost = 1.5; a.stuck = 0; a.best = d; }
+          if (a.state === "home" && d < A * .9 && holeBusy()) { a.state = "wait"; a.tilt = 0; antSetPose(a, "sniff"); }
+          else if (d <= step) {
+            a.x = tx; a.y = ty; a.tilt = 0; a.t = 0;
+            if (a.state === "walk") { a.state = "sniff"; antSetPose(a, "sniff"); }
+            else { a.state = "in"; antSetPose(a, null); }
+          } else {
+            a.x += dx / d * step; a.y += dy / d * step;
+            a.tilt += (clamp(dy / d, -.8, .8) * 18 * a.face - a.tilt) * Math.min(1, dt * 8);
+          }
+        }
+      } else if (a.state === "sniff" && a.t >= ANT_SNIFF) {
+        a.state = "bite"; a.t = 0; antSetPose(a, "bite"); sfx.antMunch();
+      } else if (a.state === "bite" && a.t >= .3) {
+        f.el.classList.add("bitten");
+        a.state = "chew"; a.t = 0; antSetPose(a, null);
+      } else if (a.state === "chew" && a.t >= ANT_CHEW) {
+        f.carried = true; layer.appendChild(f.el);
+        a.state = "home"; a.t = 0; antSetPose(a, "walk");
+        a.face = antHill.x < a.x ? -1 : 1;
+      } else if (a.state === "in") {
+        a.s = Math.max(0, 1 - a.t / .3); f.s = a.s;
+        if (a.s <= 0) { antDelivered(a); continue; }
+      }
+      if (f.carried) { f.x = a.x - a.face * A * .1; f.y = a.y - A * .43; antDrawFood(f); }
+    }
+    antCollide();
+    ants.forEach(antDraw);
+    if (!running || paused) return;
+    if (foods.length || ants.length) { antIdle = 0; antPeeked = false; return; }
+    if (antPeekEls) return;
+    antIdle += dt;
+    if (antIdle >= ANT_HUNGRY_AFTER) { antIdle = 2; antPeeked = false; antShowPeek(true); }
+    else if (antIdle >= ANT_PEEK_AFTER && !antPeeked) { antPeeked = true; antShowPeek(false); }
+  }
+  function antCollide() {
+    const onGround = ants.filter(a => a.state !== "out" && a.state !== "in");
+    const moves = a => a.state === "walk" || a.state === "home" || a.state === "wait";
+    for (let i = 0; i < onGround.length; i++) for (let j = i + 1; j < onGround.length; j++) {
+      const a = onGround[i], b = onGround[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || .001, min = A * .7;
+      if (d >= min || a.ghost > 0 || b.ghost > 0) continue;
+      const wa = moves(a) ? (moves(b) ? .5 : 1) : 0, wb = moves(b) ? (moves(a) ? .5 : 1) : 0, push = min - d;
+      const nx = dx / d, ny = dy / d, side = a.y <= b.y ? 1 : -1, slip = push * .9;
+      a.x -= nx * push * wa - ny * slip * wa * side; a.y -= ny * push * wa + nx * slip * wa * side;
+      b.x += nx * push * wb - ny * slip * wb * side; b.y += ny * push * wb + nx * slip * wb * side;
+      [a, b].forEach(c => { c.x = clamp(c.x, A * .4, W - A * .4); c.y = clamp(c.y, antG.top - A * .3, antG.bot); if (c.food.carried) { c.food.x = c.x - c.face * A * .1; c.food.y = c.y - A * .43; antDrawFood(c.food); } });
+    }
+  }
+  function antDelivered(a) {
+    a.el.remove(); a.food.el.remove();
+    ants = ants.filter(x => x !== a); foods = foods.filter(x => x !== a.food);
+    if (gameOver) return;
+    sfx.antHome(); burst(antHill.x, antHill.y, S * .5);
+    if (antHillEl) { const i = antHillEl.firstElementChild; i.classList.remove("pop"); void i.offsetWidth; i.classList.add("pop"); }
+    caughtInLevel++;
+    renderStars(true);
+    if (caughtInLevel < LV().goal) return;
+    if (level >= ANT_LEVELS.length - 1) { finish(); return; }
+    level++; caughtInLevel = 0;
+    levelUp(); antMeasure();
+  }
+  function antShowPeek(hungry) {
+    const box = document.createElement("div");
+    box.className = "antpeek" + (hungry ? " hungry" : "");
+    box.innerHTML = `<div class="peekhead">${PEEK_SVG}</div>`;
+    const bubble = hungry ? document.createElement("div") : null;
+    if (bubble) { bubble.className = "antbubble"; bubble.innerHTML = `<i class="d2"></i><i class="d1"></i><div class="thought">${FOODS[LV().foods - 1]}</div>`; }
+    layer.append(box, ...(bubble ? [bubble] : []));
+    antPeekEls = { box, bubble };
+    antPlacePeek();
+    if (hungry) sfx.antRumble(); else sfx.antPeek();
+    box.firstElementChild.addEventListener("animationend", e => { if (e.target === box.firstElementChild && e.animationName !== "antWiggle") antHidePeek(); });
+  }
+  function antPlacePeek() {
+    const { box, bubble } = antPeekEls, w = A * 1.1, h = A * .9;
+    box.style.width = w + "px"; box.style.height = h + "px";
+    box.style.transform = `translate(${antHill.x - w / 2}px,${antHill.y - h}px)`; box.style.zIndex = Math.round(antHill.y);
+    const side = antHill.x < W / 2 ? 1 : -1;
+    if (bubble) {
+      bubble.style.transform = `translate(${antHill.x + side * A * .3 - (side < 0 ? A * .8 : 0)}px,${antHill.y - A * 1.5}px)`;
+      bubble.classList.toggle("left", side < 0);
+    }
+  }
+  function antHidePeek() {
+    if (!antPeekEls) return;
+    antPeekEls.box.remove(); if (antPeekEls.bubble) antPeekEls.bubble.remove();
+    antPeekEls = null;
+  }
+
   // ================= Net =================
   // hx, hy: hoop centre in the 200-unit art; r: hoop radius, so the visible hoop matches NET_R
   const NET_ART = {
     fly: { svg: NET_SVG, hx: 80, hy: 80, r: 64 },
     butterfly: { svg: BFNET_SVG, hx: 70, hy: 60, r: 48 },
+    hand: { svg: HAND_SVG, hx: 100, hy: 64, k: () => A * .5 / 46 },   // hotspot in the middle of the hand, where the food starts
   };
-  const netArt = () => NET_ART[MODE === "butterflies" ? "butterfly" : "fly"];
+  const netArt = () => NET_ART[MODE === "butterflies" ? "butterfly" : MODE === "ants" ? "hand" : "fly"];
+  const netK = a => a.k ? a.k() : NET_R / a.r;
   function sizeNet(el) {
-    const k = NET_R / netArt().r;
+    const k = netK(netArt());
     el.style.width = el.style.height = (200 * k) + "px";
   }
   function placeNet(el, x, y) {
-    const a = netArt(), k = NET_R / a.r;
+    const a = netArt(), k = netK(a);
     el.style.left = (x - a.hx * k) + "px";
     el.style.top  = (y - a.hy * k) + "px";
   }
@@ -1177,6 +1439,7 @@
   function syncNetArt() {
     const a = netArt();
     cursorNet.innerHTML = a.svg;
+    cursorNet.classList.toggle("hand", MODE === "ants");
     cursorNet.style.transformOrigin = `${a.hx / 2}% ${a.hy / 2}%`;
     sizeNet(cursorNet); netToMouse();
   }
@@ -1184,7 +1447,7 @@
   // Net follows the mouse; the system cursor hides only while it's shown
   let mouseIn = false, overUI = false, swooping = false, lastMouse = null, usingMouse = false;
   function syncCursor() {
-    const aim = running && !paused && usingMouse && mouseIn && !overUI;
+    const aim = running && !paused && usingMouse && mouseIn && !overUI && (MODE !== "ants" || HAND_OK);
     glass.classList.toggle("aiming", aim);
     cursorNet.classList.toggle("away", !aim || swooping);
   }
@@ -1213,6 +1476,24 @@
       ], { duration: 260, easing: "cubic-bezier(.5,0,.8,.6)", fill: "forwards" });
       out.onfinish = () => el.remove();
     }, quick ? 150 : 190 + (hit ? 470 : 120));
+  }
+
+  function handDrop({ x, y }, fromCursor) {
+    const el = document.createElement("div"), a = NET_ART.hand, k = a.k();
+    el.className = "net hand"; el.innerHTML = HAND_SVG;
+    el.style.width = el.style.height = 200 * k + "px";
+    el.style.left = x - a.hx * k + "px"; el.style.top = y - a.hy * k + "px";
+    fx.appendChild(el);
+    setTimeout(() => el.classList.add("open"), 200);
+    el.animate([
+      fromCursor ? { transform: "none", opacity: 1 } : { transform: "translateY(-25%)", opacity: 0, easing: "ease-out" },
+      { transform: "none", opacity: 1, offset: .2 },
+      { transform: "none", opacity: 1, offset: .3, easing: "ease-in-out" },
+      { transform: "translateY(3%)", opacity: 1, offset: .4, easing: "ease-in-out" },
+      { transform: "none", opacity: 1, offset: .55, easing: "ease-in" },
+      { transform: "translateY(-30%)", opacity: 1, offset: .85 },
+      { transform: "translateY(-38%)", opacity: 0 },
+    ], { duration: 650, fill: "forwards" }).onfinish = () => el.remove();
   }
 
   // Challenge with a mouse: the cursor net swats in place with no delay
@@ -1323,7 +1604,7 @@
   }
 
   function fill() {
-    if (gameOver || MODE === "butterflies") return;
+    if (gameOver || MODE === "butterflies" || MODE === "ants") return;
     let want = LV().flies;
     if (MODE !== "bees" && level === LEVELS.length - 1) want = Math.min(want, LV().goal - caughtInLevel);
     const need = want - aliveCount();
@@ -1365,7 +1646,7 @@
     lvNum.textContent = ar(level + 1);
     if (isCh()) { timeLeft += ALLOT[level]; shownTime = -1; renderTime(); }
     const minis = Array.from({ length: LV().flies }, (_, i) =>
-      `<span class="mini">${MODE === "butterflies" ? butterflySVG((bfSet ? bfSet.all : BF_COLORS)[i % LV().colors]) : FLY_SVG}</span>`).join("");
+      `<span class="mini">${MODE === "butterflies" ? butterflySVG((bfSet ? bfSet.all : BF_COLORS)[i % LV().colors]) : MODE === "ants" ? ANT_SVG : FLY_SVG}</span>`).join("");
     banner.innerHTML = `<div class="inner">
         <div class="b-title">${T("cheers")[level] || T("cheers")[1]}</div>
         <div class="b-flies">${minis}</div>
@@ -1441,8 +1722,8 @@
   }
 
   function showEnd() {
-    const msg = endScreen.querySelector("[data-i18n='allCaught'], [data-i18n='allBf']");
-    msg.dataset.i18n = MODE === "butterflies" ? "allBf" : "allCaught"; msg.textContent = T(msg.dataset.i18n);
+    const msg = endScreen.querySelector("[data-i18n='allCaught'], [data-i18n='allBf'], [data-i18n='allAnts']");
+    msg.dataset.i18n = MODE === "butterflies" ? "allBf" : MODE === "ants" ? "allAnts" : "allCaught"; msg.textContent = T(msg.dataset.i18n);
     fitCards(); endScreen.classList.add("show");
     confetti(endScreen);
     const ab = $("againBtn");
@@ -1457,12 +1738,11 @@
     document.body.dataset.mode = MODE;
     syncNetArt();
     sfx.init();
-    miss.load();
     clearTimeout(endTimer);
     gen++;
     flies.forEach(f => { f.el.remove(); if (f.voice) f.voice.stop(); });
     flies = []; pending = 0;
-    flora.innerHTML = ""; bfClear();
+    flora.innerHTML = ""; bfClear(); antClear();
     level = 0; caughtInLevel = 0;
     gameOver = false; running = true; paused = false; resumeQueue = [];
     glass.classList.remove("paused"); $("pauseScreen").classList.remove("show");
@@ -1479,7 +1759,7 @@
     renderStats();
     measure();
     overUI = false; netToMouse(); syncCursor();   // show the net at the mouse right away
-    if (MODE === "butterflies") bfNewPart(); else fill();
+    if (MODE === "butterflies") bfNewPart(); else if (MODE === "ants") antStart(); else fill();
   }
 
   // ================= Input =================
@@ -1490,6 +1770,17 @@
     if (e.target.closest("button, .overlay.show")) return;
     const r = glass.getBoundingClientRect();
     const px = e.clientX - r.left, py = e.clientY - r.top;
+    if (MODE === "ants") {
+      const at = antTap(px, py);
+      if (at) {
+        if (HAND_OK) handDrop(at, e.pointerType === "mouse");
+        if (e.pointerType === "mouse") {
+          swooping = true; syncCursor();
+          setTimeout(() => { swooping = false; netToMouse(); syncCursor(); }, 620);
+        }
+      }
+      return;
+    }
     if (MODE === "butterflies") {
       const hit = bfTap(px, py);
       if (!hit) swoop(px, py, false, false);
@@ -1581,6 +1872,7 @@
       reset();
       if (go) { sfx.init(); sfx.uiOn(); action(); return; }
       btn.classList.remove("nudge"); void btn.offsetWidth; btn.classList.add("nudge");
+      btn.addEventListener("animationend", () => btn.classList.remove("nudge"), { once: true });
       showHint(btn);
     });
     btn.addEventListener("pointerleave", reset);
@@ -1602,7 +1894,147 @@
   $("beesBtn").addEventListener("click", () => startGame("bees"));
   $("bfBtn").addEventListener("click", () => { bfPick = false; startGame("butterflies"); });
   $("bfPickBtn").addEventListener("click", () => { bfPick = true; startGame("butterflies"); });
+  $("antBtn").addEventListener("click", () => startGame("ants"));
   $("chAgain").addEventListener("click", () => startGame("challenge"));
+  // ================= What's new =================
+  // One picture per version that changed something a child can see, newest first, so a 3-year-old can follow it.
+  // Each art item is [markup, centre x %, centre y %, width % of the stage, animation]; play starts that mode.
+  const newer = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number);
+    for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+    return false; };
+  const art = {
+    ant: `<div class="ant walk"><div class="flip">${ANT_SVG}</div></div>`,
+    fly: `<div class="flying">${FLY_SVG}</div>`,
+    bee: `<div class="flying">${BEE_SVG}</div>`,
+    bf: i => butterflySVG(BF_COLORS[i]),
+    gflower: i => gardenFlowerSVG(BF_COLORS[i]),
+    sun: `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46" fill="#FFE27A" opacity=".55"/><circle cx="50" cy="50" r="34" fill="#FFD54A"/></svg>`,
+    cloud: `<svg viewBox="0 0 120 60" aria-hidden="true"><path d="M22 54C8 54 4 38 16 33C14 18 34 12 42 22C48 6 76 6 80 24C96 18 112 30 104 44C114 52 104 56 98 54Z" fill="#fff"/></svg>`,
+    pause: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#fff"/><rect x="7.6" y="6.5" width="3" height="11" rx="1.2" fill="#5A4636"/><rect x="13.4" y="6.5" width="3" height="11" rx="1.2" fill="#5A4636"/></svg>`,
+    yes: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#4CBB5E"/><path d="M6.5 12.5l3.6 3.6 7.4-8" stroke="#fff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    no: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#F0525E"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/></svg>`,
+    trophy: `<div class="ntrophy">${TROPHY_SVG}</div>`,
+    star: `<div class="nspark">${STAR_SVG}</div>`,
+    bubble: t => `<span class="nbub">${t}</span>`,
+    btn: (ico, cls) => `<span class="nbtn ${cls}">${ico}</span>`,
+  };
+  const NEWS = [
+    { v: "1.18.0", k: "news1180", bg: "soil", play: "ants", snd: () => { sfx.antMunch(); setTimeout(sfx.antHome, 380); },
+      art: [[HILL_SVG, 20, 60, 36], [art.ant, 46, 54, 22, "walk"], [FOODS[0], 68, 60, 11, "bob"]] },
+    { v: "1.17.0", k: "news1170", bg: "garden", play: "bfPick", snd: () => sfx.bfCatch(),
+      art: [[art.gflower(0), 36, 62, 22], [art.bf(0), 36, 24, 17, "hover"], [art.bf(1), 78, 34, 14, "away"]] },
+    { v: "1.16.0", k: "news1160", bg: "garden", snd: () => sfx.bfLand(),
+      art: [[art.gflower(2), 30, 62, 20], [art.gflower(3), 70, 62, 20], [art.bf(2), 30, 22, 14, "hover"], [art.bf(3), 70, 24, 14, "hover2"]] },
+    { v: "1.15.0", k: "news1150", bg: "garden", play: "butterflies", snd: () => sfx.bfBloom(),
+      art: [[art.gflower(1), 50, 62, 24], [art.bf(1), 50, 26, 17, "land"]] },
+    { v: "1.14.5", k: "news1145", bg: "meadow", snd: () => sfx.uiOn(),
+      art: [[art.btn(FLY_SVG, "green"), 40, 46, 50, "press"], [art.btn(BEE_SVG, "yellow round"), 82, 46, 18, "press2"]] },
+    { v: "1.13.0", k: "news1130", bg: "meadow", snd: () => sfx.uiOff(),
+      art: [[art.pause, 40, 46, 22, "pulse"], [FLY_SVG, 72, 54, 14]] },
+    { v: "1.12.0", k: "news1120", bg: "sky", snd: () => sfx.aww(),
+      art: [[art.sun, 50, 44, 26], [art.cloud, 50, 46, 34, "cloud"], ["", 50, 50, 100, "shade"]] },
+    { v: "1.11.0", k: "news1110", bg: "meadow", snd: () => sfx.uiOn(),
+      art: [[art.bubble("ع"), 34, 42, 20, "bob"], [art.bubble("A"), 66, 42, 20, "bob2"]] },
+    { v: "1.9.0", k: "news1090", bg: "meadow", snd: () => sfx.bloom(),
+      art: [[flowerSVG(PETALS[0]), 40, 66, 14], [flowerSVG(PETALS[1]), 70, 70, 11], [art.bee, 40, 30, 13, "visit"]] },
+    { v: "1.6.0", k: "news1060", bg: "meadow", play: "bees", snd: () => sfx.squeak(),
+      art: [[art.fly, 32, 32, 15, "buzz"], [art.yes, 32, 62, 9], [art.bee, 66, 32, 15, "buzz2"], [art.no, 66, 62, 9]] },
+    { v: "1.4.0", k: "news1040", bg: "meadow", snd: () => sfx.newBest(),
+      art: [[art.trophy, 50, 46, 22, "pulse"], [art.star, 26, 34, 9, "twinkle"], [art.star, 74, 30, 7, "twinkle2"]] },
+    { v: "1.3.0", k: "news1030", bg: "meadow", snd: () => sfx.combo(3),
+      art: [[NET_SVG, 50, 52, 34], [FLY_SVG, 43, 40, 9, "buzz"], [FLY_SVG, 54, 44, 9, "buzz2"], [art.star, 76, 30, 7, "twinkle"]] },
+    { v: "1.0.0", k: "news1000", bg: "meadow", play: "kids", snd: () => sfx.caught(),
+      art: [[art.fly, 38, 44, 15, "buzz"], [NET_SVG, 66, 50, 30, "swoop"]] },
+  ];
+  // true: versions not seen yet (or the newest) big on top, older ones folded under one button; false: every version in one grid
+  const NEWS_HERO = true;
+  const newsScreen = $("newsScreen"), newsList = $("newsList"), newsBtn = $("newsBtn");
+  let newsSeen = null;
+  try { newsSeen = localStorage.getItem("flyCatch.seen"); } catch (e) {}
+  const freshNews = n => newsSeen ? newer(n.v, newsSeen) : n === NEWS[0];
+  newsBtn.classList.toggle("fresh", !newsSeen || newer(NEWS[0].v, newsSeen));
+  const STACK = [[FLY_SVG, "#BFE6FA", "-8deg"], [butterflySVG(BF_COLORS[1]), "#E9D4FA", "4deg"], [ANT_SVG, "#E8C9A0", "-3deg"]];
+  function renderNews() {
+    const fresh = NEWS.filter(freshNews), hero = NEWS_HERO ? (fresh.length ? fresh : NEWS.slice(0, 1)) : [], old = NEWS.filter(n => !hero.includes(n));
+    newsList.innerHTML = (hero.length ? `<div class="nhero">${hero.map(newsTile).join("")}</div>
+      <button class="narch" type="button" aria-expanded="false" aria-controls="newsOld">
+        <span class="nstack" aria-hidden="true">${STACK.map(([s, c, r]) => `<i style="--c:${c};--r:${r}">${s}</i>`).join("")}</span>
+        <span>${T("newsOlder")} <small dir="ltr">${old.length}</small></span><span class="nchev" aria-hidden="true"></span>
+      </button>` : "") + `<div class="nold" id="newsOld"${hero.length ? " hidden" : ""}>${old.map(newsTile).join("")}</div>`;
+  }
+  function newsTile(n) {
+    const i = NEWS.indexOf(n);
+    return `<article class="nitem${freshNews(n) ? " fresh" : ""}">
+      <div class="nstage ${n.bg}" role="button" tabindex="0" data-i="${i}" aria-label="${n.v} ${T(n.k)}">
+        ${n.art.map(([h, x, y, w, a]) => `<i class="ni${a ? " a-" + a : ""}" style="left:${x}%;top:${y}%;width:${w}%">${h}</i>`).join("")}
+        <span class="nver">${freshNews(n) ? STAR_SVG : ""}<b dir="ltr">${n.v.replace(/\.0$/, "")}</b></span>
+        <div class="nbar"><p class="ncap">${T(n.k)}</p>${n.play ? `<button class="nplay" type="button" data-play="${n.play}" aria-label="${T("play")}"></button>` : ""}</div>
+      </div>
+    </article>`;
+  }
+  function openNews() {
+    renderNews();
+    startScreen.classList.remove("show"); newsScreen.classList.add("show");
+    newsSeen = NEWS[0].v; newsBtn.classList.remove("fresh");
+    try { localStorage.setItem("flyCatch.seen", newsSeen); } catch (e) {}
+    measure();
+  }
+  function closeNews() { newsScreen.classList.remove("show"); startScreen.classList.add("show"); measure(); }
+  holdButton(newsBtn, openNews);
+  $("newsBack").addEventListener("click", closeNews);
+  function newsTap(stage) {
+    sfx.init(); NEWS[stage.dataset.i].snd();
+    stage.classList.remove("go"); void stage.offsetWidth; stage.classList.add("go");
+  }
+  newsList.addEventListener("click", e => {
+    const arch = e.target.closest(".narch");
+    if (arch) {
+      const open = arch.getAttribute("aria-expanded") !== "true", old = $("newsOld"), card = arch.closest(".card");
+      const glide = top => card.scrollTo({ top, behavior: calm.matches ? "auto" : "smooth" });   // only the card; scrollIntoView would also shift the clipped game screen
+      const bar = card.nextElementSibling && card.nextElementSibling.classList.contains("kscroll") ? card.nextElementSibling : null;
+      arch.setAttribute("aria-expanded", String(open));
+      sfx.init(); if (open) sfx.uiOn(); else sfx.uiOff();
+      (old.folding || []).forEach(a => a.cancel()); old.folding = null; card.style.alignContent = "";
+      if (open) {
+        old.hidden = false; measure();
+        glide(card.scrollTop + arch.getBoundingClientRect().top - card.getBoundingClientRect().top - 12);
+        return;
+      }
+      if (calm.matches) { old.hidden = true; card.scrollTop = 0; measure(); return; }
+      // Closing: the pictures fade first (with the scrollbar, unless the smaller card still needs it), then the card shrinks to its new size
+      old.hidden = true; const stillScrolls = overflows(card); old.hidden = false;
+      if (stillScrolls) glide(0);   // a scrollbar that's fading away stays put
+      const fade = { duration: 260, easing: "ease-in", fill: "forwards" };
+      const cards = old.animate([{ opacity: 1, translate: "0 0", scale: 1 }, { opacity: 0, translate: "0 26px", scale: .86 }], fade);
+      old.folding = [cards, ...(bar && !stillScrolls ? [bar.animate([{ opacity: 1 }, { opacity: 0 }], fade)] : [])];
+      cards.onfinish = () => {
+        const from = card.offsetHeight;
+        old.hidden = true; card.scrollTop = 0; measure();
+        const to = card.offsetHeight;
+        cards.cancel();
+        card.style.alignContent = "start";
+        const shrink = card.animate([{ height: from + "px" }, { height: to + "px" }], { duration: 340, easing: "cubic-bezier(.3,0,.2,1)" });
+        old.folding.push(shrink);
+        shrink.onfinish = () => { (old.folding || []).forEach(a => a.cancel()); old.folding = null; card.style.alignContent = ""; };
+      };
+      return;
+    }
+    const play = e.target.closest(".nplay");
+    if (play) {
+      newsScreen.classList.remove("show");
+      const m = play.dataset.play;
+      if (m === "bfPick" || m === "butterflies") bfPick = m === "bfPick";
+      startGame(m === "bfPick" ? "butterflies" : m);
+      return;
+    }
+    const stage = e.target.closest(".nstage");
+    if (stage) newsTap(stage);
+  });
+  newsList.addEventListener("keydown", e => {
+    const stage = e.target.closest(".nstage");
+    if (stage && e.target === stage && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); newsTap(stage); }
+  });
+
   // ================= Install as app =================
   const installBtn = $("installBtn"), iosHint = $("iosHint");
   const installed = () => matchMedia("(display-mode: standalone)").matches ||
@@ -1623,8 +2055,13 @@
   const isAppleTouch = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   if (isAppleTouch) $("silentHint").hidden = false;
-  if ("serviceWorker" in navigator &&
-      (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+  // No offline cache while developing on this computer, so every reload shows the latest files
+  const local = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  if ("serviceWorker" in navigator && local) {
+    navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.map(r => r.unregister()))).catch(() => {});
+    if (window.caches) caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
+  }
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
     navigator.serviceWorker.register("sw.js").then(reg => {
       // iOS has no install prompt, so show instructions once the site is installable
       if (isAppleTouch && !installed()) { iosHint.hidden = false; fitCards(); }
@@ -1633,9 +2070,6 @@
     }).catch(() => {});
     // Offer a grown-up "Update" pill only when the service worker holds a newer version than this page is running.
     // A worker taking over is not enough: the page has often already loaded the new files, or it's the very first install
-    const newer = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number);
-      for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
-      return false; };
     navigator.serviceWorker.addEventListener("message", e => {
       if (!e.data || typeof e.data.version !== "string" || !newer(e.data.version, VERSION)) return;
       $("updateBtn").hidden = false; installBtn.hidden = true; fitCards();   // one grown-up pill at a time; Install returns after the reload
@@ -1652,7 +2086,7 @@
     paused = true;
     glass.classList.add("paused");
     fitCards(); $("pauseScreen").classList.add("show");
-    miss.stop(); syncCursor();
+    syncCursor();
     setTimeout(() => $("resumeBtn").focus({ preventScroll: true }), 50);
   }
   function resumeGame() {
@@ -1670,7 +2104,7 @@
     $("pauseScreen").classList.remove("show");
     gen++; pending = 0;
     flies.forEach(f => { f.el.remove(); if (f.voice) f.voice.stop(); });
-    flies = []; flora.innerHTML = ""; bfClear();
+    flies = []; flora.innerHTML = ""; bfClear(); antClear();
     running = false; gameOver = true;
     document.body.classList.remove("playing");
     syncCursor(); goStart();
@@ -1743,7 +2177,6 @@
     if (muted) {
       sfx.uiOff();   // play the tone before muting so it's heard
       setTimeout(() => { if (muted) sfx.setMuted(true); }, 180);
-      miss.stop();
     } else {
       sfx.setMuted(false);
       sfx.uiOn();
@@ -1814,7 +2247,7 @@
   let last = 0, lastLight = 0;
   const FLY_BUZZ = .024;   // single fly volume
   const BEE_BUZZ = .0113;   // tuned 25% clearer than one fly
-  const BF_FLUTTER = .006;   // barely there, far below the flies
+  const BF_FLUTTER = .03;   // about a third of one fly on a laptop speaker
   const PAN_MAX  = .7;   // never fully in one ear, to protect kids' ears on headphones
   function frame(t) {
     const dt = Math.min(.05, (t - last) / 1000 || 0);
@@ -1831,6 +2264,7 @@
     }
     if (!paused && !document.hidden && flies.length) step(dt);
     if (!paused && !document.hidden && (bugs.length || bfFlowers.length)) bfStep(dt);
+    if (!paused && !document.hidden && MODE === "ants" && (running || ants.length)) antStep(dt);
     if (t - lastLight > 100) { lastLight = t; updateLight(); }   // 10 times a second is enough
     // Per insect: pan follows position, bigger ones slightly louder
     for (const f of flies) {
@@ -1854,7 +2288,7 @@
   requestAnimationFrame(frame);
 
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { pauseGame(); sfx.suspend(); miss.stop(); } else sfx.resume();
+    if (document.hidden) { pauseGame(); sfx.suspend(); } else sfx.resume();
   });
   // ================= Cards that fit =================
   // A card squeezes a step at a time until it fits the screen; only if it still can't does it scroll, with a big, friendly scrollbar

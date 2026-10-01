@@ -4,9 +4,9 @@
 
 # Fly Catcher · صيد الذباب
 
-A gentle fly-catching game for young kids. Tap a fly and a net swoops down to catch it. Built as a single-page web app with no dependencies, it can be installed on phones and tablets and plays offline.
+A gentle game for young kids with flies, butterflies and ants: tap a fly and a net swoops down to catch it, take each butterfly to the flower of its colour, or drop food and watch an ant carry it home. Built as a single-page web app with no dependencies, it can be installed on phones and tablets and plays offline.
 
-**Play:** [tinyurl.com/fly-catch](https://tinyurl.com/fly-catch)
+**Play:** [mohammad-diab.github.io/fly-catch-app](https://mohammad-diab.github.io/fly-catch-app/) · short link: [tinyurl.com/fly-catch](https://tinyurl.com/fly-catch)
 
 ## Modes
 
@@ -14,12 +14,16 @@ A gentle fly-catching game for young kids. Tap a fly and a net swoops down to ca
 - **🐝 Watch the bees:** catch the flies but leave the bees alone while they sip from their flowers.
 - **🦋 Butterfly garden:** every butterfly flies to the flower of its own colour; nothing to get wrong.
 - **🌸 Watch the colours:** only the butterflies that match the flower may be caught. Every colour wears a real butterfly's markings, so colour-blind kids can match by shape.
+- **🐜 Feed the ants:** tap the ground to drop food; an ant comes out, takes a bite and carries the rest home.
 - **🏆 Challenge:** points, a timer, streak multipliers, combo catches and a saved best score.
 
 ## Features
 
 - Arabic and English, picked from the browser language, with a toggle on the start screen
-- Installable as an app (PWA) and fully playable offline
+- Installable as an app (PWA) and fully playable offline from the first launch; the font ships with the game, so nothing loads from other websites
+- Collects nothing: no accounts, ads, tracking or analytics; only the language, best score and last "What's new" seen stay on the device ([privacy page](privacy.html))
+- A "What's new" screen with one moving picture per version, so even a 3-year-old can see what changed
+- Grown-up buttons (language, What's new, Challenge, Install, Update) need a press-and-hold, so a toddler can't set them off
 - Sounds generated in the browser, with stereo buzzing that follows each insect
 - Each mode has its own sky and ground, so a child can tell the games apart at a glance
 - Works with touch and mouse, and pauses automatically when the app goes to the background
@@ -35,7 +39,7 @@ The game loads its language files with `fetch`, so it must be served over HTTP r
 python -m http.server 8000
 ```
 
-Then open <http://localhost:8000>. Any static server works, including VS Code Live Server.
+Then open <http://localhost:8000>. Any static server works, including VS Code Live Server. On localhost the offline service worker is switched off, so a normal reload always shows your latest changes.
 
 ## Project structure
 
@@ -47,6 +51,11 @@ lang/<code>.json      one translation file per language
 sw.js                 service worker for offline play
 manifest.webmanifest  install settings
 icons/                app icons (icon.svg is the source)
+privacy.html          privacy page for parents and app stores (linked from the menu)
+screenshots/          install-window screenshots listed in the manifest (wide and narrow), captured from the game
+icons/share.jpg       1200×630 preview card for links shared on WhatsApp and social apps
+fonts/                Baloo Bhaijaan 2, shipped with the game (SIL Open Font License, see fonts/OFL.txt)
+tools/check.py        release checks, run before every push
 docs/FEATURES.md      feature checklist and design rules for every mode
 CHANGELOG.md          what changed in each version
 ```
@@ -61,11 +70,7 @@ Any key missing from a new file falls back to Arabic. `{n}` in a string is repla
 
 ## Releasing an update
 
-Push to `main` and GitHub Pages redeploys in about a minute. Bump `VERSION` in both `js/game.js` and `sw.js` on every release, otherwise installed copies keep serving the old cached version, and add an entry to `CHANGELOG.md`. Installed apps pick up the new version the next time they come back on screen and show an "Update the game" pill on the menu.
-
-## Credits
-
-The Arabic "No!" voice was made with [ElevenLabs](https://elevenlabs.io) on its free plan, for this free, non-commercial game. The voice is not covered by the MIT license.
+Run `python tools/check.py` first: it checks that every text exists in both languages, the version numbers and changelog agree, every offline and manifest file exists, nothing loads from other websites, the privacy page still lists everything the game saves, and the JavaScript has no syntax errors (when Node.js is available, directly or through fnm). Then push to `main` and GitHub Pages redeploys in about a minute. Bump `VERSION` in both `js/game.js` and `sw.js` on every release, otherwise installed copies keep serving the old cached version, and add an entry to `CHANGELOG.md`. Installed apps pick up the new version the next time they come back on screen and show an "Update the game" pill on the menu.
 
 ## License
 

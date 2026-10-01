@@ -1,4 +1,12 @@
+/* Baloo Bhaijaan 2 (SIL Open Font License, see fonts/OFL.txt), shipped with the game so nothing loads from outside;
+   one variable file per script covers every weight */
+@font-face{font-family:"Baloo Bhaijaan 2";font-style:normal;font-weight:400 800;font-display:swap;
+  src:url(../fonts/baloo-bhaijaan-2-arabic.woff2) format("woff2");unicode-range:U+0600-06FF, U+0750-077F, U+0870-088E, U+0890-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC, U+102E0-102FB, U+10E60-10E7E, U+10EC2-10EC4, U+10EFC-10EFF, U+1EE00-1EE03, U+1EE05-1EE1F, U+1EE21-1EE22, U+1EE24, U+1EE27, U+1EE29-1EE32, U+1EE34-1EE37, U+1EE39, U+1EE3B, U+1EE42, U+1EE47, U+1EE49, U+1EE4B, U+1EE4D-1EE4F, U+1EE51-1EE52, U+1EE54, U+1EE57, U+1EE59, U+1EE5B, U+1EE5D, U+1EE5F, U+1EE61-1EE62, U+1EE64, U+1EE67-1EE6A, U+1EE6C-1EE72, U+1EE74-1EE77, U+1EE79-1EE7C, U+1EE7E, U+1EE80-1EE89, U+1EE8B-1EE9B, U+1EEA1-1EEA3, U+1EEA5-1EEA9, U+1EEAB-1EEBB, U+1EEF0-1EEF1}
+@font-face{font-family:"Baloo Bhaijaan 2";font-style:normal;font-weight:400 800;font-display:swap;
+  src:url(../fonts/baloo-bhaijaan-2-latin.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+
 :root{
+  --build:32;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -74,7 +82,8 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 }
 
 /* Scenery behind the glass */
-.outside{position:absolute;inset:0;pointer-events:none;filter:blur(1.4px) saturate(1.05)}
+.outside{position:absolute;inset:0;pointer-events:none}
+.outside > *{filter:blur(1.4px)}   /* per shape, so a drifting cloud doesn't re-blur the whole sky every frame */
 .sun{
   position:absolute;top:11%;left:9%;width:clamp(66px,15vmin,140px);aspect-ratio:1;border-radius:50%;
   background:var(--sun);box-shadow:0 0 0 14px var(--sun-glow),0 0 70px 30px var(--sun-glow);
@@ -116,6 +125,7 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 .bflower.wilt{animation:wilt .6s ease-in forwards}
 @keyframes bloom{from{transform:scale(0) rotate(-12deg);opacity:.2}to{transform:scale(1) rotate(0);opacity:1}}
 @keyframes wilt{to{transform:scale(0) rotate(10deg);opacity:0}}
+.layer{z-index:2}
 .fx{z-index:3}
 
 /* ================= Fly ================= */
@@ -189,6 +199,9 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 .net svg{width:100%;height:100%;display:block;overflow:visible}
 .cursor-net{opacity:.9;transition:opacity .12s}
 .cursor-net.away{opacity:0}
+.cursor-net.hand:not(.away){opacity:1}
+.net.hand text{transform-box:fill-box;transform-origin:70% 30%;transition:transform .12s ease-out}
+.net.hand.open text{transform:rotate(-16deg)}
 /* Toggled by real mouse movement, not device type, so touch laptops work */
 .glass.aiming{cursor:none}
 
@@ -337,6 +350,73 @@ body[data-mode="challenge"]{--sky-top:#7C79E0;--sky-bot:#FFC79A;--hill-far:#8CC7
 :root[data-theme="dark"] body[data-mode="challenge"]{--sky-top:#2B1E4E;--sky-bot:#86485A;--hill-far:#2F5043;--hill-near:#253F36;--tree:#1F3F2E}
 .cloud{transition:opacity 1s ease}
 body[data-mode="butterflies"] .cloud{opacity:0}
+body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--hill-near:#8FC266;--tree:#4E9A45;--soil-top:#D6A46D;--soil-bot:#B7814C;--grass:#86C25C}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) body[data-mode="ants"]{--sky-top:#1F2D55;--sky-bot:#6B5560;--hill-far:#4A5E35;--hill-near:#3D5029;--tree:#2E4A24;--soil-top:#7A5636;--soil-bot:#5C3F26}
+}
+:root[data-theme="dark"] body[data-mode="ants"]{--sky-top:#1F2D55;--sky-bot:#6B5560;--hill-far:#4A5E35;--hill-near:#3D5029;--tree:#2E4A24;--soil-top:#7A5636;--soil-bot:#5C3F26}
+
+/* ================= Feed the ants ================= */
+.antground{position:absolute;left:-10%;right:-10%;bottom:-4%;border-radius:50% 50% 0 0/18% 18% 0 0;
+  background:linear-gradient(var(--soil-top,#D6A46D),var(--soil-bot,#B7814C));
+  box-shadow:inset 0 calc(var(--a) * .09) 0 var(--grass,#86C25C),inset 0 calc(var(--a) * .09 + 12px) 20px rgba(0,0,0,.12);animation:fadeIn .6s ease both}
+.tuft{position:absolute;width:calc(var(--a) * .34 * var(--k));aspect-ratio:4/3;translate:-50% -100%;
+  background:no-repeat center/contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 30'%3E%3Cg fill='%2366B04C'%3E%3Cpath d='M6 30Q4 18 0 12Q10 18 11 30Z'/%3E%3Cpath d='M12 30Q12 12 18 2Q16 16 18 30Z'/%3E%3Cpath d='M20 30Q24 14 32 8Q24 20 25 30Z'/%3E%3C/g%3E%3Cg fill='%2386C25C'%3E%3Cpath d='M15 30Q8 20 6 10Q14 18 19 30Z'/%3E%3Cpath d='M24 30Q30 20 40 16Q30 24 29 30Z'/%3E%3C/g%3E%3C/svg%3E")}
+.tuft.bloom::after{content:"";position:absolute;left:30%;top:-36%;width:46%;aspect-ratio:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-10 -10 20 20'%3E%3Cg fill='%23FFF6F8' stroke='%23F2B8C6' stroke-width='.6'%3E%3Ccircle cy='-5' r='3.8'/%3E%3Ccircle cx='4.76' cy='-1.55' r='3.8'/%3E%3Ccircle cx='2.94' cy='4.05' r='3.8'/%3E%3Ccircle cx='-2.94' cy='4.05' r='3.8'/%3E%3Ccircle cx='-4.76' cy='-1.55' r='3.8'/%3E%3C/g%3E%3Ccircle r='3' fill='%23FFC93C' stroke='%23E8A21E' stroke-width='.6'/%3E%3C/svg%3E") center/contain no-repeat}
+.anthill{position:absolute;left:0;top:0}
+.anthill .in{width:100%;height:100%;transform-origin:50% 100%;animation:hillGrow .8s cubic-bezier(.2,1.5,.4,1) both}
+.anthill .in.pop{animation:hillPop .45s cubic-bezier(.2,1.6,.4,1)}
+.anthill svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 6px rgba(0,0,0,.18))}
+@keyframes hillPop{40%{scale:1.08 .92}}
+@keyframes hillGrow{from{scale:0}}
+.ant{position:absolute;left:0;top:0;width:var(--a);height:calc(var(--a) * .667);transform-origin:50% 100%;will-change:transform}
+.ant .flip{width:100%;height:100%}
+.ant svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25))}
+.ant .ta,.ant .tb,.ant .antn{transform-box:view-box}
+.ant .head{transform-box:view-box;transform-origin:78px 40px}
+.ant.walk .ta{animation:antStep .32s linear infinite}
+.ant.walk .tb{animation:antStep .32s linear -.16s infinite}
+.ant.walk .antn{animation:antFeel .64s ease-in-out infinite alternate}
+.ant.walk svg{animation:antBob .16s ease-in-out infinite alternate}
+.ant.bite .head{animation:munch .15s ease-in-out 2 alternate}
+.ant.sniff .antn{animation:antFeel .25s ease-in-out infinite alternate}
+@keyframes antStep{0%{rotate:-13deg;translate:0 0}55%{rotate:13deg;translate:0 0}78%{rotate:0deg;translate:0 -4px}100%{rotate:-13deg;translate:0 0}}
+@keyframes antFeel{from{rotate:-6deg}to{rotate:5deg}}
+@keyframes antBob{to{translate:0 -2%}}
+@keyframes munch{to{rotate:14deg}}
+.food{position:absolute;left:0;top:0;width:calc(var(--a) * .5);height:calc(var(--a) * .5);transform-origin:50% 100%}
+.food .in{width:100%;height:100%;transform-origin:50% 100%}
+.food svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 4px 3px rgba(0,0,0,.22))}
+.food.landed .in{animation:foodLand .3s ease}
+.food.bitten svg{--bite:radial-gradient(circle at var(--bx,84%) var(--by,18%),transparent var(--br,26%),#000 calc(var(--br,26%) + 1%));-webkit-mask:var(--bite);mask:var(--bite)}
+@keyframes foodLand{40%{scale:1.18 .82}}
+.food.bob .in{animation:foodBob .16s ease-in-out infinite alternate}
+@keyframes foodBob{from{translate:0 0;rotate:-4deg}to{translate:0 -9%;rotate:4deg}}
+.antpeek{position:absolute;left:0;top:0;overflow:hidden;pointer-events:none}
+.antpeek .peekhead{position:absolute;left:calc(50% - var(--a) * .33);top:100%;width:calc(var(--a) * .66);height:calc(var(--a) * .86);
+  transform-origin:50% 100%;animation:antPeek 2.6s ease-in-out both}
+.antpeek svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 3px 3px rgba(0,0,0,.2))}
+.antpeek .eyes,.antpeek .antn{transform-box:view-box}
+.antpeek .eyes{animation:antLook 2.6s ease-in-out both}
+.antpeek .antn{animation:antFeel .5s ease-in-out infinite alternate}
+.antpeek.hungry .peekhead{animation:antHungry 3.6s ease-in-out both,antWiggle .45s ease-in-out .5s 6 alternate}
+@keyframes antPeek{0%,100%{translate:0 0}20%,82%{translate:0 calc(var(--a) * -.62)}}
+@keyframes antLook{0%,28%{translate:0 0}38%,52%{translate:-4px 1px}62%,76%{translate:4px 1px}86%,100%{translate:0 0}}
+@keyframes antHungry{0%,100%{translate:0 0}14%,86%{translate:0 calc(var(--a) * -.8)}}
+@keyframes antWiggle{from{rotate:-6deg}to{rotate:6deg}}
+.antbubble{position:absolute;left:0;top:0;z-index:5000;width:calc(var(--a) * .8);aspect-ratio:1;pointer-events:none}
+.antbubble .thought{position:absolute;inset:0;padding:calc(var(--a) * .14);border-radius:50%;background:#fff;
+  box-shadow:0 4px 10px rgba(0,0,0,.18);transform-origin:15% 85%;animation:cloudPop 3.6s both}
+.antbubble i{position:absolute;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.15)}
+.antbubble .d1{width:22%;aspect-ratio:1;left:-6%;bottom:-6%;animation:dot1Pop 3.6s both}
+.antbubble .d2{width:11%;aspect-ratio:1;left:-20%;bottom:-22%;animation:dot2Pop 3.6s both}
+.antbubble.left .thought{transform-origin:85% 85%}
+.antbubble.left .d1{left:auto;right:-6%}
+.antbubble.left .d2{left:auto;right:-20%}
+.antbubble svg{width:100%;height:100%;display:block}
+@keyframes dot2Pop{0%,13%{scale:0}17%{scale:1.35}20%,88%{scale:1}92%,100%{scale:0}}
+@keyframes dot1Pop{0%,17%{scale:0}21%{scale:1.35}24%,85%{scale:1}89%,100%{scale:0}}
+@keyframes cloudPop{0%,21%{scale:0}27%{scale:1.15}31%,80%{scale:1}86%,100%{scale:0}}
 
 /* ================= Butterfly garden ================= */
 .bfly{position:absolute;left:0;top:0;width:var(--s);height:var(--s);will-change:transform;transition:width .8s ease,height .8s ease}
@@ -382,7 +462,7 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 /* ================= Screens ================= */
 .overlay{
   position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:16px;
-  background:rgba(20,30,50,.26);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  background:rgba(20,30,50,.36);
   opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;cursor:auto;overflow:hidden;
 }
 .overlay{pointer-events:none}
@@ -405,30 +485,28 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .card::-webkit-scrollbar{display:none}
 .card.scrolls{overflow-y:auto;padding-inline:10px 52px}   /* room for the kid scrollbar */
 
-/* Kid scrollbar: chunky, rounded and bright, shown only when a card still can't fit after squeezing */
+/* Kid scrollbar: big and easy to grab, styled like the game's buttons (solid accent, soft 3D edge), shown only when a card still can't fit */
 .kscroll{
-  --ks-line:#3A2A1F;
-  position:absolute;z-index:2;width:34px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  --ks-fill:var(--net);--ks-edge:#D9561F;
+  position:absolute;z-index:2;width:34px;display:flex;flex-direction:column;align-items:center;gap:8px;
   touch-action:none;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;
 }
 .overlay.show .kscroll.on{opacity:1;visibility:visible;transition-delay:.45s}
 .ks-btn{flex:none;width:32px;height:32px;border-radius:50%;cursor:pointer;display:grid;place-items:center;
-  border:3px solid var(--ks-line);background:radial-gradient(circle at 35% 30%,#FFF1B8,#FFC93C 55%,#F29A2E);
-  box-shadow:0 3px 0 var(--ks-line);transition:translate .1s,box-shadow .1s,opacity .2s}
-.ks-btn::before{content:"";width:0;height:0;border-inline:7px solid transparent;border-bottom:9px solid var(--ks-line);margin-top:-2px}
-.ks-down::before{border-bottom:0;border-top:9px solid var(--ks-line);margin:2px 0 0}
-.ks-btn:active{translate:0 2px;box-shadow:0 1px 0 var(--ks-line)}
-.ks-btn.off{opacity:.45}
+  background:var(--ks-fill);box-shadow:0 3px 0 var(--ks-edge);transition:translate .1s,box-shadow .1s,background .2s}
+.ks-btn::before{content:"";width:0;height:0;border-inline:6px solid transparent;border-bottom:8px solid #fff;margin-top:-2px}
+.ks-down::before{border-bottom:0;border-top:8px solid #fff;margin:2px 0 0}
+.ks-btn:active{translate:0 2px;box-shadow:0 1px 0 var(--ks-edge)}
+.ks-btn.off{background:var(--star-empty);box-shadow:none}
+.ks-btn.off::before{border-bottom-color:var(--panel)}
+.ks-down.off::before{border-top-color:var(--panel)}
 .overlay.show .kscroll.on .ks-down:not(.off){animation:ksNudge 1.1s ease-in-out 1.2s 3}
 @keyframes ksNudge{50%{translate:0 4px}}
-.ks-track{position:relative;flex:1;width:26px;border-radius:999px;cursor:pointer;
-  border:3px solid var(--ks-line);box-shadow:inset 0 2px 4px rgba(0,0,0,.15);
-  background:repeating-linear-gradient(45deg,var(--panel) 0 6px,color-mix(in srgb,var(--star) 26%,var(--panel)) 6px 12px)}
-.ks-thumb{position:absolute;left:1px;right:1px;top:0;min-height:40px;border-radius:999px;cursor:grab;
-  border:3px solid var(--ks-line);background:linear-gradient(90deg,#FFE7A0,#FFC93C 45%,#EE9A2C);
-  box-shadow:inset 0 3px 0 rgba(255,255,255,.6),inset 0 -3px 0 rgba(0,0,0,.12);transition:scale .15s}
+.ks-track{position:relative;flex:1;width:12px;border-radius:999px;cursor:pointer;background:var(--star-empty)}
+.ks-thumb{position:absolute;left:-6px;right:-6px;top:0;min-height:40px;border-radius:999px;cursor:grab;
+  background:var(--ks-fill);box-shadow:0 3px 0 var(--ks-edge);transition:scale .15s}
 .ks-thumb::after{content:"";position:absolute;left:50%;top:50%;width:10px;height:12px;translate:-50% -50%;
-  background:repeating-linear-gradient(var(--ks-line) 0 2px,transparent 2px 5px)}
+  background:repeating-linear-gradient(rgba(255,255,255,.85) 0 2px,transparent 2px 5px)}
 .ks-thumb.grab{cursor:grabbing;scale:1.08}
 
 .card h1,.card h2{font-weight:800;margin:0;line-height:1.15}
@@ -458,7 +536,8 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .big:active{transform:translateY(4px) scale(.97);box-shadow:0 2px 0 var(--good-dark)}
 .big .lbl{display:flex;flex-direction:column;align-items:center;min-width:0}
 /* Mode buttons share one grid so the fly and bee line up; the mirrored end slot keeps the label on the button's center and shrinks first when space is tight */
-.big.mode{display:grid;grid-template-columns:2.1em minmax(max-content,1fr) minmax(0,2.1em);align-items:center;column-gap:.3em;padding-inline:.7em}
+.big.mode{display:grid;grid-template-columns:2.1em minmax(max-content,1fr) minmax(0,2.1em);align-items:center;column-gap:.3em;padding-inline:.7em;
+  font-size:min(clamp(22px,5.5vmin,32px),6.6cqi)}   /* follows the menu width so the longest label never spills out */
 .big.mode .lbl{justify-content:center}
 @container (max-width:300px){.big.mode{font-size:20px;padding-inline:.4em;column-gap:.2em}}
 @container (max-width:210px){.big.mode{font-size:17px;grid-template-columns:1.8em minmax(0,1fr) 0}.big.mode .ico{width:1.8em}}
@@ -479,6 +558,9 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 .big.bfpick{background:#FF6FA8;box-shadow:0 6px 0 #D6417F,0 14px 24px rgba(214,65,127,.28)}
 .big.bfpick:active{box-shadow:0 2px 0 #D6417F}
 .big.bfpick::after{animation-delay:5.6s}
+.big.ant{background:#F08A4B;box-shadow:0 6px 0 #C4622A,0 14px 24px rgba(196,98,42,.28)}
+.big.ant:active{box-shadow:0 2px 0 #C4622A}
+.big.ant::after{animation-delay:6.8s}
 .big .ico .glow{opacity:0}
 /* A soft shine sweeps across now and then */
 .big::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
@@ -517,9 +599,15 @@ body[data-mode="butterflies"] .cloud{opacity:0}
   border-radius:inherit;background:var(--net-soft);opacity:.6}
 .chip.holding::before{width:100%;transition:width var(--hold,.7s) linear}
 .chip.ready{color:var(--ink);border-color:var(--net)}
-.chip.nudge{animation:nudge .45s ease}
+.chip.nudge,.overlay.show .card-actions > .chip.nudge{animation:nudge .45s ease}
 @keyframes nudge{20%{rotate:-6deg}40%{rotate:5deg}60%{rotate:-3deg}80%{rotate:2deg}}
 .ver{font-size:11px;font-weight:600;color:var(--ink-soft);opacity:.5;letter-spacing:.5px}
+.foot-line{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.2em .5em}
+#startScreen > .card{padding-bottom:8px}   /* the © line is the last row, so it sits close to the edge */
+.foot-line .sep{font-size:11px;font-weight:700;color:var(--ink-soft);opacity:.5}
+.credit{align-self:stretch;text-align:left;margin-top:2px;padding-top:6px;border-top:1px solid var(--star-empty);font-size:11px;font-weight:600;color:var(--ink-soft);opacity:.5;letter-spacing:.3px}   /* left in both languages */
+.plink{font-size:11px;font-weight:700;color:var(--ink-soft);opacity:.7;text-underline-offset:2px}
+.plink:focus-visible{outline:2px solid var(--net);outline-offset:2px;border-radius:4px}
 /* Hint bubble placed next to the pill that was only tapped (positioned from JS) */
 .card .hold-hint{position:absolute;z-index:5;left:0;top:0;margin:0;padding:.35em .85em .45em;border-radius:999px;
   background:var(--ink);color:var(--panel);font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap;
@@ -586,7 +674,7 @@ body[data-mode="butterflies"] .cloud{opacity:0}
 
 /* Landscape screens too short for a stacked card (class set from JS): intro beside the actions */
 html.split-cards .card.split{width:min(96%,880px);grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
-  grid-template-areas:"top top" "intro actions" "foot foot";column-gap:clamp(18px,4vw,44px)}
+  grid-template-areas:"top top" "intro actions" "foot actions";column-gap:clamp(18px,4vw,44px)}
 html.split-cards .card.split .card-actions{width:100%}
 html.split-cards .hero{width:calc(clamp(64px,20vmin,120px) * var(--shrink,1))}
 html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
@@ -619,6 +707,7 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 #beesBtn{view-transition-name:menu-bees}
 #bfBtn{view-transition-name:menu-butterflies}
 #bfPickBtn{view-transition-name:menu-bfpick}
+#antBtn{view-transition-name:menu-ants}
 #challengeBtn{view-transition-name:menu-challenge}
 .menu .card-top{view-transition-name:menu-top}
 .menu .card-foot{view-transition-name:menu-foot}
@@ -636,10 +725,130 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
   .hud,.card,.banner .inner{zoom:1.5}
 }
 
+/* ================= What's new ================= */
+/* One picture card per version; tap a picture to hear it, ▶ starts that mode */
+#newsBtn{margin-inline-start:auto;color:var(--ink)}
+#newsBtn .cico{width:1.35em;height:1.35em;vertical-align:-.3em}
+#newsBtn.fresh{border-color:#FFC93C}
+#newsBtn.fresh .cico{animation:giftWiggle 2.4s ease-in-out infinite}
+#newsBtn.fresh::after{content:"";position:absolute;top:3px;inset-inline-start:5px;width:7px;height:7px;border-radius:50%;
+  background:#FF6B8A;box-shadow:0 0 0 2px var(--panel);animation:ntwinkle 1.2s ease-in-out infinite alternate}
+@keyframes giftWiggle{0%,60%,100%{rotate:0deg}68%{rotate:-14deg}76%{rotate:12deg}84%{rotate:-8deg}92%{rotate:5deg}}
+.gift{width:clamp(64px,16vmin,96px);margin:0 auto .2em}
+.gift svg{width:100%;display:block;overflow:visible}
+.gift .lid{transform-box:fill-box;transform-origin:15% 100%}
+.overlay.show .gift .lid{animation:lidPop 2.6s cubic-bezier(.3,1.6,.5,1) .6s infinite}
+@keyframes lidPop{0%,45%,100%{rotate:0deg;translate:0 0}12%,30%{rotate:-18deg;translate:0 -18%}}
+.card.news{width:min(92%,520px)}
+#newsList{gap:clamp(12px,3vmin,18px)}
+.nhero{display:grid;gap:clamp(12px,3vmin,18px)}
+.nold{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,2.4vmin,14px)}
+.nold[hidden]{display:none}
+@container (max-width:300px){.nold{grid-template-columns:minmax(0,1fr)}}
+@media (orientation:landscape) and (min-width:760px){
+  .card.news{width:min(94%,940px)}
+  .nhero{grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),560px));justify-content:center}
+  .nold{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  #newsList .narch{width:min(100%,560px);margin-inline:auto}
+  .card.news .card-intro{display:flex;align-items:center;justify-content:center;gap:.4em}
+  .card.news .gift{width:clamp(44px,8vmin,60px);margin:0}
+}
+.narch{display:flex;align-items:center;justify-content:center;gap:.7em;width:100%;font:inherit;font-weight:800;font-size:clamp(16px,4vmin,20px);
+  color:var(--ink);background:transparent;border:2px solid var(--star-empty);border-radius:999px;padding:.4em 1em .45em;cursor:pointer;
+  transition:transform .12s ease,border-color .2s}
+.narch:active{transform:scale(.97)}
+.narch:focus-visible{outline:3px solid var(--net);outline-offset:3px}
+.narch small{font-size:.75em;font-weight:700;color:var(--ink-soft)}
+.nstack{display:flex;padding-inline-start:.6em}
+.nstack i{width:1.9em;aspect-ratio:1;margin-inline-start:-.6em;border-radius:.5em;display:grid;place-items:center;background:var(--c);
+  box-shadow:0 2px 0 rgba(0,0,0,.12),0 0 0 2px var(--panel);rotate:var(--r)}
+.nstack svg{width:72%;display:block;overflow:visible}
+.nstack .wings{transform-origin:50px 50px}
+.nchev{position:relative;flex:none;width:1.5em;aspect-ratio:1;border-radius:50%;background:var(--net);box-shadow:0 3px 0 #D9561F;transition:rotate .3s cubic-bezier(.3,1.5,.5,1)}
+.nchev::before{content:"";position:absolute;left:50%;top:54%;translate:-50% -50%;border-inline:.32em solid transparent;border-top:.4em solid #fff}
+.narch[aria-expanded="true"] .nchev{rotate:180deg}
+.nstage{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;cursor:pointer;font-size:clamp(12px,2.9vmin,14px);
+  box-shadow:inset 0 -5px 0 rgba(0,0,0,.08),0 4px 0 rgba(0,0,0,.08);-webkit-tap-highlight-color:transparent}
+.nstage:focus-visible{outline:3px solid var(--net);outline-offset:3px}
+.nstage:active{scale:.98}
+.nstage.meadow{background:radial-gradient(140% 70% at 50% 108%,#6CC26A 58%,transparent 59%),linear-gradient(#8ED0F8,#DFF4FF)}
+.nstage.garden{background:radial-gradient(140% 70% at 50% 108%,#7BCB6E 58%,transparent 59%),linear-gradient(#E9D4FA,#FFF1E6)}
+.nstage.soil{background:linear-gradient(#BFE6FA 0 30%,#86C25C 30% 35%,#D6A46D 35%,#B7814C)}
+.nstage.sky{background:linear-gradient(#7CC8F7,#DFF4FF)}
+.nitem.fresh .nstage{box-shadow:0 0 0 4px #FFC93C,0 0 22px rgba(255,201,60,.7)}
+.ni{position:absolute;translate:-50% -50%;pointer-events:none}
+.ni > *,.ni svg{width:100%;display:block;overflow:visible}
+.ni svg{height:auto;filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}
+.nstage .ant{position:relative;width:100%;height:auto;aspect-ratio:3/2}
+.nstage .wings{transform-origin:50px 50px;animation:bflap .34s ease-in-out infinite}
+.nstage .glow{opacity:0}
+.ntrophy{color:#E0A21B}
+.nspark{color:#FFC93C}
+.nspark svg path{fill:currentColor}
+.nbub{display:grid;place-items:center;aspect-ratio:1;border-radius:50%;background:#fff;font-weight:800;font-size:clamp(22px,7vmin,40px);color:var(--ink);
+  box-shadow:0 3px 0 rgba(0,0,0,.12);position:relative}
+.nbub::after{content:"";position:absolute;bottom:-8%;left:22%;border:8px solid transparent;border-top-color:#fff;border-left-color:#fff}
+.nbtn{display:flex;align-items:center;gap:8%;padding:6% 10%;border-radius:999px;background:#57C26B;box-shadow:0 5px 0 #3B9A4E}
+.nbtn svg{width:34%;flex:none}
+.nbtn::after{content:"";flex:1;height:.6em;border-radius:999px;background:rgba(255,255,255,.85)}
+.nbtn.yellow{background:#F6C64B;box-shadow:0 5px 0 #D9A21F}
+.nbtn.round{aspect-ratio:1;padding:16%;justify-content:center}
+.nbtn.round svg{width:100%}
+.nbtn.round::after{display:none}
+.a-shade{height:100%;background:rgba(20,30,50,.3);opacity:0;animation:nshade 5s ease-in-out infinite}
+.a-walk{animation:nwalk 3.2s linear infinite}
+.a-bob{animation:nbob 1.6s ease-in-out infinite alternate}
+.a-bob2{animation:nbob 1.6s ease-in-out -.8s infinite alternate}
+.a-hover{animation:nhover 2.4s ease-in-out infinite}
+.a-hover2{animation:nhover 2.4s ease-in-out -1.2s infinite}
+.a-away{animation:naway 3.6s ease-in-out infinite}
+.a-land{animation:nland 3.4s ease-in-out infinite}
+.a-press{animation:npress 2.4s ease-in-out infinite}
+.a-press2{animation:npress 2.4s ease-in-out -1.2s infinite}
+.a-pulse{animation:npulse 1.8s ease-in-out infinite}
+.a-cloud{animation:ncloud 5s ease-in-out infinite}
+.a-visit{animation:nvisit 3.4s ease-in-out infinite}
+.a-buzz{animation:nbuzz 1.8s ease-in-out infinite}
+.a-buzz2{animation:nbuzz 1.8s ease-in-out -.9s infinite reverse}
+.a-twinkle{animation:ntwinkle 1.4s ease-in-out infinite alternate}
+.a-twinkle2{animation:ntwinkle 1.4s ease-in-out -.7s infinite alternate}
+.a-swoop{transform-origin:40% 40%;animation:nswoop 2.6s cubic-bezier(.3,1.4,.5,1) infinite}
+@keyframes nwalk{0%{transform:translateX(-55%)}75%,100%{transform:translateX(18%)}}
+@keyframes nbob{to{transform:translateY(-10%)}}
+@keyframes nhover{0%,100%{transform:translate(0,0)}50%{transform:translate(8%,-14%)}}
+@keyframes naway{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(60%,-40%) rotate(14deg)}}
+@keyframes nland{0%,100%{transform:translateY(-30%)}45%,65%{transform:translateY(55%) scale(.9)}}
+@keyframes npress{0%,70%,100%{transform:translateY(0)}78%{transform:translateY(6%) scale(.96)}}
+@keyframes npulse{50%{transform:scale(1.1)}}
+@keyframes ncloud{0%,100%{transform:translateX(-95%)}50%{transform:translateX(0)}}
+@keyframes nshade{0%,25%,75%,100%{opacity:0}45%,55%{opacity:1}}
+@keyframes nvisit{0%,100%{transform:translate(160%,-20%)}40%,70%{transform:translate(0,40%)}}
+@keyframes nbuzz{0%,100%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(18%,-12%) rotate(8deg)}50%{transform:translate(-6%,-20%) rotate(-6deg)}75%{transform:translate(-16%,4%) rotate(4deg)}}
+@keyframes ntwinkle{from{transform:scale(.6) rotate(-12deg);opacity:.5}to{transform:scale(1.15) rotate(12deg);opacity:1}}
+@keyframes nswoop{0%,40%,100%{transform:rotate(0deg)}55%{transform:rotate(-28deg) translate(-12%,-6%)}70%{transform:rotate(4deg)}}
+.nstage.go .ni > *{animation:nhop .55s cubic-bezier(.2,1.7,.4,1)}
+@keyframes nhop{0%{scale:1}35%{scale:1.25 .8}65%{scale:.9 1.15}100%{scale:1}}
+.nhero .nstage{aspect-ratio:16/10;border-radius:22px;font-size:clamp(14px,3.8vmin,18px)}
+.nver{position:absolute;top:4%;inset-inline-start:3%;display:flex;align-items:center;gap:.25em;padding:.12em .6em .2em;border-radius:999px;
+  background:var(--panel-a);color:var(--ink);font-weight:800;font-size:1.2em;line-height:1.2;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.nitem.fresh .nver{background:var(--star);color:#3A2A1F}
+.nver svg{width:1em;height:1em;display:block;animation:ntwinkle 1s ease-in-out infinite alternate}
+.nver svg path{fill:#fff}
+.nbar{position:absolute;inset-inline:3%;bottom:5%;display:flex;align-items:flex-end;gap:3%}
+.card .ncap{flex:1;min-width:0;margin:0;padding:.3em .55em .4em;border-radius:10px;background:var(--panel-a);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  color:var(--ink);font-size:1em;font-weight:700;line-height:1.3;text-align:start;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.nplay{position:relative;flex:none;width:3.2em;aspect-ratio:1;border-radius:50%;border:0;padding:0;cursor:pointer;
+  font-size:inherit;background:#4CBB5E;box-shadow:0 5px 0 #2F8E42,0 8px 14px rgba(0,0,0,.2);animation:npulse 1.6s ease-in-out infinite}
+.nplay::before{content:"";position:absolute;left:50%;top:50%;translate:-36% -50%;border-block:.7em solid transparent;border-left:1.1em solid #fff}
+.nplay:active{translate:0 3px;box-shadow:0 2px 0 #2F8E42}
+.nplay:focus-visible{outline:3px solid var(--net);outline-offset:3px}
+
 @media (prefers-reduced-motion:reduce){
   .cloud,.hero{animation:none}
   .confetti{display:none}
   .overlay.show .card,.overlay.show .card *,.big::after,.ks-btn{animation:none !important}
   .bfly .wings,.bfly.hint .rot,.bslot,.gflower.current .glow{animation:none}
+  .ant.walk .ta,.ant.walk .tb,.ant.walk .antn,.ant.walk svg,.ant.bite .head,.ant.sniff .antn,.food.bob .in{animation:none}
+  #newsBtn .cico,#newsBtn::after{animation:none}
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none !important}
 }
