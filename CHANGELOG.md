@@ -2,19 +2,14 @@
 
 ## 1.18.0 · 2026-10-01
 
-- New "Feed the ants" mode: tap the ground to drop food, and an ant comes out, takes a bite and carries it home
-- Real ant foods: sugar cube, white bread, strawberry, apple and cookie, one more each level; the hungry ant dreams of the level's food
-- A hand drops the food right where you tap
-- New "What's new" screen: one moving picture per version, the newest big and the older ones folded away
-- A friendly "nuh-uh" sound replaces the recorded "No!" voice, in both languages
-- Butterfly wings can now be heard on laptop speakers
-- Small flowers in the ants' grass
-- Menu labels always fit their buttons, and short landscape screens no longer need to scroll
-- The font ships with the game: nothing loads from other websites, and it works offline from the first launch
-- Privacy page: the game collects nothing
-- Screenshots in the install window and a picture when the link is shared
-- Updated app description
-- Release checks (tools/check.py) and no offline cache while developing on this computer
+- New "Feed the ants" mode: a hand drops real ant foods where you tap, one more food each level
+- New "What's new" screen with a picture for each version
+- Sounds: a friendly "nuh-uh" instead of the "No!" voice, and butterfly wings heard on laptops
+- Menu labels always fit their buttons
+- Font included, so the game works fully offline
+- Privacy page in the game's language
+- Install screenshots and a link preview picture
+- Release checks script
 
 ## 1.17.1 · 2026-10-01
 
