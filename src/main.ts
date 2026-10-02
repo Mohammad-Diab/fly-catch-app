@@ -9,13 +9,14 @@ import { bakeScenery, watchColours } from "./render/scenery";
 import { Stage } from "./render/stage";
 import { lowerQuality } from "./render/sprites";
 import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from "./menu/icons";
+import { moveMenu, resetMenu } from "./menu/motion";
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
   const VERSION = "1.18.1";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 40;
+  const BUILD = 41;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
@@ -2097,9 +2098,15 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
     slow = gap > 1 / 40 ? slow + gap : Math.max(0, slow - gap);
     if (slow > 3) { slow = 0; if (lowerQuality()) { measure(); bake(); } }
   }
+  // The start menu runs at about 30 frames a second: its slow sways and flaps look the same, at half the work or less
+  let menuAt = -1, menuLast = 0, cloudDt = 0;
   function frame(t) {
     const gap = (t - last) / 1000, dt = Math.min(.05, gap || 0);
     last = t;
+    const menu = !document.hidden && startScreen.classList.contains("show");
+    if (menu && menuAt < 0) menuAt = t;
+    if (!menu && menuAt >= 0) { menuAt = -1; resetMenu(); }
+    const menuTick = menu && t - menuLast >= 1000 / 30 - 4;   // a bit early, so a 60 Hz screen still gets every other frame
     if (running && !paused && !document.hidden) watchSpeed(gap);
     if (running && !paused && !document.hidden) {
       clock += dt;
@@ -2114,11 +2121,16 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
     if (!paused && !document.hidden && flies.length) step(dt);
     if (!paused && !document.hidden && (bugs.length || bfFlowers.length)) bfStep(dt);
     if (!paused && !document.hidden && MODE === "ants" && (running || ants.length)) antStep(dt);
-    if (!paused && !document.hidden) { moveClouds(dt); for (const fl of beeFlowers) fl.t += dt; for (const fl of garden) fl.t += dt; }
+    if (!paused && !document.hidden) {
+      cloudDt += dt;
+      if (!menu || menuTick) { moveClouds(cloudDt); cloudDt = 0; }
+      for (const fl of beeFlowers) fl.t += dt;
+      for (const fl of garden) fl.t += dt;
+    }
     if (beeFlowers.some(flowerGone)) beeFlowers = beeFlowers.filter(fl => !flowerGone(fl));
     if (t - lastLight > 100) { lastLight = t; updateLight(); }   // 10 times a second is enough
     if (!document.hidden && (!paused || stage.dirty)) drawStage();
-    if (!document.hidden && startScreen.classList.contains("show")) drawIcons(t / 1000);
+    if (menuTick) { menuLast = t; drawIcons(t / 1000); moveMenu((t - menuAt) / 1000); }
     // Per insect: pan follows position, bigger ones slightly louder
     for (const f of flies) {
       if (!f.voice) continue;

@@ -6,7 +6,7 @@
   src:url(../fonts/baloo-bhaijaan-2-latin.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 
 :root{
-  --build:40;
+  --build:41;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -432,17 +432,11 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
 .card h2{font-size:clamp(32px,8vmin,50px)}
 .card p{margin:.3em 0 0;font-size:clamp(17px,4vmin,22px);color:var(--ink-soft);line-height:1.45}
 .hero{position:relative;width:calc(clamp(90px,24vmin,140px) * var(--shrink,1));aspect-ratio:1;margin:0 auto .15em;cursor:pointer;
-  filter:drop-shadow(0 12px 10px rgba(0,0,0,.16));animation:hover 3.2s ease-in-out infinite}
+  filter:drop-shadow(0 12px 10px rgba(0,0,0,.16))}   /* sways from the game loop (src/menu/motion.ts) */
 .hero.tapped .pic{animation:squash .46s cubic-bezier(.3,1.7,.5,1)}
 /* The menu's moving pictures are canvases drawn by the game (src/menu/icons.ts), with room around the box for wings and legs */
 .hero .pic,.big .ico .pic{position:absolute;left:-20%;top:-20%;width:140%;height:140%;display:block}
 .hero.drawn,.big .ico.drawn{filter:none}   /* the shadow is in the picture */
-@keyframes hover{
-  0%,100%{transform:translate(-14px,0) rotate(-14deg)}
-  25%{transform:translate(0,-10px) rotate(6deg)}
-  50%{transform:translate(14px,0) rotate(16deg)}
-  75%{transform:translate(0,8px) rotate(-4deg)}
-}
 .trophy{font-size:calc(clamp(54px,14vmin,90px) * var(--shrink,1));line-height:1}
 
 /* Big kid buttons: bold, tactile, with the game's own fly and bee */
@@ -489,6 +483,7 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
   translate:-130% 0;animation:shine 5s ease-in-out 1.8s infinite}
 .big.bee::after{animation-delay:3.2s}
 @keyframes shine{0%,72%{translate:-130% 0}100%{translate:130% 0}}
+#startScreen .big::after{animation:none;translate:var(--shine,-130%) 0}   /* the menu's shine is moved by the game loop */
 /* Auto-restart fill grows in reading direction; animating width keeps the edge rounded */
 .big.auto::before{
   content:"";position:absolute;top:0;bottom:0;inset-inline-start:0;width:0;z-index:-1;
@@ -542,20 +537,19 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
 .overlay.show .card-intro > :not(.hero){animation:popUp .5s cubic-bezier(.2,1.4,.4,1) both}
 .overlay.show .card-intro > :nth-child(2){animation-delay:.08s}
 .overlay.show .card-intro > :nth-child(3){animation-delay:.14s}
-.overlay.show .hero{animation:heroIn .9s cubic-bezier(.2,1.2,.4,1) both,hover 3.2s ease-in-out .9s infinite}
+.overlay.show .hero{animation:heroIn .9s cubic-bezier(.2,1.2,.4,1) both}
 .overlay.show .trophy{animation:trophyIn .8s cubic-bezier(.2,1.7,.4,1) .12s both}
 .overlay.show .card-actions > *{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both}
 .overlay.show .card-actions > :nth-child(2){animation-delay:.32s}
 .overlay.show .card-actions > :nth-child(3){animation-delay:.44s}
 .overlay.show .card-actions > :nth-child(4){animation-delay:.56s}
 .overlay.show .card-actions > :nth-child(5){animation-delay:.68s}
-.overlay.show #startBtn{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both,breathe 2.6s ease-in-out 1.4s infinite}
+.overlay.show #startBtn{animation:popUp .6s cubic-bezier(.2,1.5,.4,1) .2s both}   /* then breathes, from the game loop */
 .overlay.show .card-foot,.overlay.show .card-top{animation:fadeIn .5s ease .5s both}
 @keyframes cardIn{from{opacity:0;translate:0 34px;scale:.92}}
 @keyframes popUp{from{opacity:0;translate:0 26px;scale:.86}}
 @keyframes heroIn{from{opacity:0;translate:-60vw -30px;scale:.5}}
 @keyframes trophyIn{from{opacity:0;scale:.2;rotate:-25deg}}
-@keyframes breathe{50%{scale:1.04}}
 @keyframes fadeIn{from{opacity:0}}
 
 /* Challenge end screen */
@@ -651,10 +645,8 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 #newsBtn{margin-inline-start:auto;color:var(--ink)}
 #newsBtn .cico{width:1.35em;height:1.35em;vertical-align:-.3em}
 #newsBtn.fresh{border-color:#FFC93C}
-#newsBtn.fresh .cico{animation:giftWiggle 2.4s ease-in-out infinite}
 #newsBtn.fresh::after{content:"";position:absolute;top:3px;inset-inline-start:5px;width:7px;height:7px;border-radius:50%;
-  background:#FF6B8A;box-shadow:0 0 0 2px var(--panel);animation:ntwinkle 1.2s ease-in-out infinite alternate}
-@keyframes giftWiggle{0%,60%,100%{rotate:0deg}68%{rotate:-14deg}76%{rotate:12deg}84%{rotate:-8deg}92%{rotate:5deg}}
+  background:#FF6B8A;box-shadow:0 0 0 2px var(--panel);transform:scale(var(--tws,1)) rotate(var(--twr,0deg));opacity:var(--two,1)}   /* the gift wiggles and the dot twinkles from the game loop */
 .gift{width:clamp(64px,16vmin,96px);margin:0 auto .2em}
 .gift svg{width:100%;display:block;overflow:visible}
 .gift .lid{transform-box:fill-box;transform-origin:15% 100%}

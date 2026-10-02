@@ -9,6 +9,7 @@ A plan is a list of steps run in order. Each step can have:
   shot    file name for a screenshot taken after settle (saved in --out)
   info    JavaScript whose value is printed on the row
   dark    true or false: switch the page to the dark or light theme (prefers-color-scheme) first
+  calm    true or false: ask for less motion (prefers-reduced-motion) first
   layers  true to print Chrome's composited layers with their reasons (what the GPU keeps separately)
 Rows show frames per second, Chrome's CPU (all its processes, % of one core), the busiest GPU engine (Windows),
 and main-thread time spent in tasks, scripts, style and layout. JavaScript errors are collected in window.__errs.
@@ -167,9 +168,14 @@ def main():
         ws.call("Page.bringToFront")
         time.sleep(4)
         ws.js("window.__fr=0;(function c(){__fr++;requestAnimationFrame(c)})()")
+        media = {}
         for step in plan:
             if "dark" in step:
-                ws.call("Emulation.setEmulatedMedia", features=[{"name": "prefers-color-scheme", "value": "dark" if step["dark"] else "light"}])
+                media["prefers-color-scheme"] = "dark" if step["dark"] else "light"
+            if "calm" in step:
+                media["prefers-reduced-motion"] = "reduce" if step["calm"] else "no-preference"
+            if "dark" in step or "calm" in step:
+                ws.call("Emulation.setEmulatedMedia", features=[{"name": k, "value": v} for k, v in media.items()])
             if "js" in step:
                 ws.js(step["js"])
             ws.js("(()=>{let s=document.getElementById('__probe');if(!s){s=document.createElement('style');"
