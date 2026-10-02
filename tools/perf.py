@@ -1,4 +1,4 @@
-"""Drives the game in a real Chrome and measures it:  python tools/perf.py <plan.json> [--out DIR] [--headless]
+"""Drives the game in a real Chrome and measures it:  python tools/perf.py <plan.json> [--out DIR] [--headless] [--sound]
 
 A plan is a list of steps run in order. Each step can have:
   name    label for the printed row
@@ -15,6 +15,7 @@ and main-thread time spent in tasks, scripts, style and layout. JavaScript error
 Dev builds expose window.__fc (flies, bugs, ants, glass) for plans that need game state.
 
 --headless runs Chrome without a window, so the mouse can't disturb a test (use it for checks, not for speed).
+--sound lets the game make sound without a real tap, as in real play (sound costs CPU too).
 
 Uses only the Python standard library. Needs Chrome, and pwsh for the CPU and GPU counters.
 """
@@ -137,6 +138,7 @@ def main():
     args = sys.argv[1:]
     out_dir = args[args.index("--out") + 1] if "--out" in args else tempfile.gettempdir()
     headless = ["--headless=new"] if "--headless" in args else []
+    sound = ["--autoplay-policy=no-user-gesture-required"] if "--sound" in args else []   # plays sound without a real tap
     plan = json.load(open(args[0], encoding="utf-8"))
     srv = subprocess.Popen([sys.executable, "-m", "http.server", str(PORT), "--bind", "127.0.0.1"], cwd=ROOT,
                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -145,7 +147,7 @@ def main():
                                "--window-position=0,0", "--window-size=1600,900",
                                "--disable-features=CalculateNativeWinOcclusion",
                                "--disable-background-timer-throttling", "--disable-renderer-backgrounding",
-                               *headless, "about:blank"])
+                               *headless, *sound, "about:blank"])
     try:
         page = None
         for _ in range(60):

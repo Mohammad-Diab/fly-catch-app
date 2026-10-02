@@ -7,6 +7,7 @@ import { drawAnt, drawFood, wantAnts, wantFoods } from "./ants/look";
 import { bugSize, drawBug, drawGarden, drawSlot, flap, gardenGone, wantBugs, wantGarden, wantSlots } from "./butterflies/look";
 import { bakeScenery, watchColours } from "./render/scenery";
 import { Stage } from "./render/stage";
+import { lowerQuality } from "./render/sprites";
 import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from "./menu/icons";
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
@@ -14,7 +15,7 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 38;
+  const BUILD = 40;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
@@ -1222,10 +1223,10 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
     const k = netK(netArt());
     el.style.width = el.style.height = (200 * k) + "px";
   }
+  // Moved with the translate property, which the compositor applies without a layout; their swing animations use transform
   function placeNet(el, x, y) {
     const a = netArt(), k = netK(a);
-    el.style.left = (x - a.hx * k) + "px";
-    el.style.top  = (y - a.hy * k) + "px";
+    el.style.translate = `${x - a.hx * k}px ${y - a.hy * k}px`;
   }
   const cursorNet = document.createElement("div");
   cursorNet.className = "net cursor-net away";
@@ -1985,9 +1986,10 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
   const CLOUD_PX_S = [28, 20];   // fixed px/s; the first crosses the sun, the second is slower for depth
   const CLOUD_START = [20, 70];   // seconds already drifted when the page opens, so they start apart
   const DIM_MAX = .22;   // max scenery dimming (~20%)
-  let cloudW = [], cloudX = [0, 0], cloudT = 0;
+  let cloudW = [], cloudX = [0, 0], cloudT = 0, sunBox = null, cloudBoxes = [];
   function tuneClouds() {
     cloudW = cloudEls.map(c => c.offsetWidth);
+    sunBox = sunEl.getBoundingClientRect(); cloudBoxes = cloudEls.map(c => c.getBoundingClientRect());   // only change on resize
     const sr = sunEl.getBoundingClientRect(), gr = glass.getBoundingClientRect(), d = sr.width * 3.2;
     haloEl.style.width = haloEl.style.height = d + "px";
     haloEl.style.transform = `translate(${sr.left - gr.left + sr.width / 2 - d / 2}px,${sr.top - gr.top + sr.height / 2 - d / 2}px)`;
@@ -2008,11 +2010,8 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
   }
   let dimNow = -1, sha = .28;
   function sunCover() {   // fraction of the sun disc covered (0 to 1)
-    const sr = sunEl.getBoundingClientRect(), R = sr.width / 2, cx = sr.left + R, cy = sr.top + R;
-    const sh = cloudEls.flatMap((c, i) => {
-      const r = c.getBoundingClientRect();
-      return cloudShapes({ left: r.left + cloudX[i], top: r.top, width: r.width, height: r.height });
-    });
+    const sr = sunBox, R = sr.width / 2, cx = sr.left + R, cy = sr.top + R;
+    const sh = cloudBoxes.flatMap((r, i) => cloudShapes({ left: r.left + cloudX[i], top: r.top, width: r.width, height: r.height }));
     let tot = 0, hit = 0; const N = 10;
     for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
       const px = cx - R + (i + .5) * 2 * R / N, py = cy - R + (j + .5) * 2 * R / N;
@@ -2085,15 +2084,23 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
     for (const f of flies) if (!f.top) drawFlier(x, f, S * f.sc, sha, d);
     for (const f of flies) if (f.top) drawFlier(x, f, S * f.sc, sha, d);   // a caught fly stays in front
   }
-  if (dev) window.__fc = { flies: () => flies, bugs: () => bugs, ants: () => ants, glass };
+  if (dev) window.__fc = { flies: () => flies, bugs: () => bugs, ants: () => ants, glass, stage };
   let last = 0, lastLight = 0;
   const FLY_BUZZ = .024;   // single fly volume
   const BEE_BUZZ = .0113;   // tuned 25% clearer than one fly
   const BF_FLUTTER = .03;   // about a third of one fly on a laptop speaker
   const PAN_MAX  = .7;   // never fully in one ear, to protect kids' ears on headphones
+  // A device that stays under 40 frames a second for 3 seconds of play draws its canvases at fewer pixels
+  let slow = 0;
+  function watchSpeed(gap) {
+    if (!(gap > 0) || gap > .5) return;   // the first frame, or back from a pause
+    slow = gap > 1 / 40 ? slow + gap : Math.max(0, slow - gap);
+    if (slow > 3) { slow = 0; if (lowerQuality()) { measure(); bake(); } }
+  }
   function frame(t) {
-    const dt = Math.min(.05, (t - last) / 1000 || 0);
+    const gap = (t - last) / 1000, dt = Math.min(.05, gap || 0);
     last = t;
+    if (running && !paused && !document.hidden) watchSpeed(gap);
     if (running && !paused && !document.hidden) {
       clock += dt;
       if (isCh()) {

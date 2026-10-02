@@ -55,7 +55,7 @@ npm run check       # type check, build, then the release checks
 index.html            page markup (no text, only translation keys)
 css/style.css         styles
 src/                  game source in TypeScript
-js/game.js            built from src/ by npm run build (committed, never edit by hand)
+js/game.js            minified build of src/ by npm run build (committed, never edit by hand)
 lang/<code>.json      one translation file per language
 sw.js                 service worker for offline play
 manifest.webmanifest  install settings

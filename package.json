@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/main.ts --bundle --format=iife --target=es2020 --outfile=js/game.js --log-level=warning",
-    "watch": "esbuild src/main.ts --bundle --format=iife --target=es2020 --outfile=js/game.js --watch",
+    "build": "esbuild src/main.ts --bundle --format=iife --target=es2020 --minify --outfile=js/game.js --log-level=warning",
+    "watch": "esbuild src/main.ts --bundle --format=iife --target=es2020 --minify --outfile=js/game.js --watch",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run build && python tools/check.py"
   },

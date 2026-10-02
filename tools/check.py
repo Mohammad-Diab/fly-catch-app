@@ -26,7 +26,9 @@ def read(path):
     with open(path, encoding="utf-8") as f:
         return f.read()
 
-game, sw, html, css = read("js/game.js"), read("sw.js"), read("index.html"), read("css/style.css")
+sw, html, css = read("sw.js"), read("index.html"), read("css/style.css")
+# The game's TypeScript source, all of it; js/game.js is its minified build
+game = "\n".join(read(os.path.join(d, f)) for d, _, fs in sorted(os.walk("src")) for f in sorted(fs) if f.endswith(".ts"))
 
 # JSON files parse
 langs, problems = {}, []
@@ -44,7 +46,7 @@ manifest = json.loads(read("manifest.webmanifest")) if not problems else {}
 listed = re.findall(r'"(\w+)"', re.search(r"const LANGUAGES = \[([^\]]*)\]", game).group(1))
 cached = re.findall(r'\./lang/(\w+)\.json', sw)
 problems = [f"lang/{c}.json is missing" for c in listed if c not in langs]
-problems += [f"lang/{c}.json is not in LANGUAGES in js/game.js" for c in langs if c not in listed]
+problems += [f"lang/{c}.json is not in LANGUAGES in src/main.ts" for c in langs if c not in listed]
 problems += [f"lang/{c}.json is not cached in sw.js" for c in listed if c not in cached]
 check("Every language is listed in the game and cached for offline", problems)
 
@@ -80,20 +82,20 @@ warn("Text keys no code seems to use (fine if used indirectly)",
 # Version numbers agree, and the changelog has this version
 gv = re.search(r'const VERSION = "([\d.]+)"', game).group(1)
 sv = re.search(r'const VERSION = "([\d.]+)"', sw).group(1)
-problems = [] if gv == sv else [f"js/game.js says {gv} but sw.js says {sv}"]
+problems = [] if gv == sv else [f"src/main.ts says {gv} but sw.js says {sv}"]
 if not re.search(r"^## " + re.escape(gv) + r"\b", read("CHANGELOG.md"), re.M):
     problems.append(f"CHANGELOG.md has no \"## {gv}\" entry")
 newest = re.search(r'const NEWS = \[\s*\{ v: "([\d.]+)"', game)
 if newest and newest.group(1) != gv:
     warnings.append(f"newest What's new entry is {newest.group(1)}, the game is {gv} (fine if this release has nothing a child would notice)")
     print(f"  note  newest What's new entry is {newest.group(1)}, the game is {gv} (fine if this release has nothing a child would notice)")
-check(f"Version {gv} matches in js/game.js, sw.js and CHANGELOG.md", problems)
+check(f"Version {gv} matches in src/main.ts, sw.js and CHANGELOG.md", problems)
 
 # Development build numbers match each other
 b1 = re.search(r"const BUILD = (\d+);", game)
 b2 = re.search(r"--build:(\d+);", css)
-check("Build number matches in js/game.js and css/style.css",
-      [] if b1 and b2 and b1.group(1) == b2.group(1) else [f"js/game.js BUILD {b1 and b1.group(1)} vs css/style.css --build {b2 and b2.group(1)}"])
+check("Build number matches in src/main.ts and css/style.css",
+      [] if b1 and b2 and b1.group(1) == b2.group(1) else [f"src/main.ts BUILD {b1 and b1.group(1)} vs css/style.css --build {b2 and b2.group(1)}"])
 
 # Every file the service worker caches exists
 core = re.findall(r'"\./([^"]*)"', re.search(r"const CORE = \[(.*?)\];", sw, re.S).group(1))
@@ -174,7 +176,7 @@ if node:
         r = subprocess.run(node + [esb] + args, capture_output=True, text=True)
         built = read(out) if r.returncode == 0 else None
         check("js/game.js is built from src/ (npm run build)",
-              [r.stderr.strip() or "build failed"] if built is None else [] if built == game else ["js/game.js is out of date: run npm run build"])
+              [r.stderr.strip() or "build failed"] if built is None else [] if built == read("js/game.js") else ["js/game.js is out of date: run npm run build"])
     else:
         print("  skip  js/game.js matches src/ (run npm install to check it)")
 else:

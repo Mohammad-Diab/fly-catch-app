@@ -1,6 +1,14 @@
 // Pictures are made once per size and reused every frame, shadows included, so a frame is only image copies
 
-export const pixelRatio = () => Math.min(devicePixelRatio || 1, 2);
+// Pixels per CSS pixel for the canvases: the screen's, at most 2, and fewer on a device that can't keep up
+let quality = 1;
+export const pixelRatio = () => Math.max(.75, Math.min(devicePixelRatio || 1, 2) * quality);
+// One step down (to 75%, then 50%); false once it's as low as it goes
+export function lowerQuality() {
+  if (quality <= .5 || pixelRatio() <= .75) return false;
+  quality = quality > .75 ? .75 : .5;
+  return true;
+}
 
 export function makeCanvas(w: number, h: number): HTMLCanvasElement {
   const c = document.createElement("canvas");
