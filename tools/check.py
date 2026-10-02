@@ -80,8 +80,8 @@ warn("Text keys no code seems to use (fine if used indirectly)",
      [k for k in sorted(all_keys - used) if k not in ("langName", "dir")])
 
 # Version numbers agree, and the changelog has this version
-gv = re.search(r'const VERSION = "([\d.]+)"', game).group(1)
-sv = re.search(r'const VERSION = "([\d.]+)"', sw).group(1)
+gv = re.search(r'const VERSION = "([\w.-]+)"', game).group(1)
+sv = re.search(r'const VERSION = "([\w.-]+)"', sw).group(1)
 problems = [] if gv == sv else [f"src/main.ts says {gv} but sw.js says {sv}"]
 if not re.search(r"^## " + re.escape(gv) + r"\b", read("CHANGELOG.md"), re.M):
     problems.append(f"CHANGELOG.md has no \"## {gv}\" entry")

@@ -12,11 +12,11 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
 import { moveMenu, resetMenu } from "./menu/motion";
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
-  const VERSION = "1.18.2";
+  const VERSION = "2.0.0-beta.1";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 43;
+  const BUILD = 44;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
@@ -1692,8 +1692,11 @@ import { moveMenu, resetMenu } from "./menu/motion";
   // ================= What's new =================
   // One picture per version that changed something a child can see, newest first, so a 3-year-old can follow it.
   // Each art item is [markup, centre x %, centre y %, width % of the stage, animation]; play starts that mode.
-  const newer = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number);
-    for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+  // "2.0.0-beta.3" comes before "2.0.0"
+  const parts = v => { const [core, pre] = v.split("-"), n = core.split(".").map(Number);
+    return [n[0] || 0, n[1] || 0, n[2] || 0, pre ? Number(pre.split(".")[1]) || 0 : Infinity]; };
+  const newer = (a, b) => { const x = parts(a), y = parts(b);
+    for (let i = 0; i < 4; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
     return false; };
   const art = {
     ant: `<div class="ant walk"><div class="flip">${ANT_SVG}</div></div>`,

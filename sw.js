@@ -1,5 +1,5 @@
 // Offline support; keep VERSION in sync with src/main.ts, or installed apps stay on the old version
-const VERSION = "1.18.2";
+const VERSION = "2.0.0-beta.1";
 const CACHE = "fly-catch-" + VERSION;
 
 const CORE = [

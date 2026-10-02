@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.18.2 · 2026-10-02
+## 2.0.0-beta.1 · 2026-10-02
 
-- Uses less battery on fast screens (90, 120 or 144 Hz): the game runs at 60 frames a second everywhere
+- Rebuilt for speed: the animals are drawn on one canvas, so it runs smoother and uses less battery
+- At most 60 frames a second on every screen, half the work on fast (120 Hz) screens
 
 ## 1.18.1 · 2026-10-01
 
