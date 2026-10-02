@@ -6,7 +6,7 @@
   src:url(../fonts/baloo-bhaijaan-2-latin.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 
 :root{
-  --build:35;
+  --build:36;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -391,36 +391,11 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
 @keyframes cloudPop{0%,21%{scale:0}27%{scale:1.15}31%,80%{scale:1}86%,100%{scale:0}}
 
 /* ================= Butterfly garden ================= */
-.bfly{position:absolute;left:0;top:0;width:var(--s);height:var(--s);will-change:transform;transition:width .8s ease,height .8s ease}
-.bfly.carried{transition-duration:.15s}   /* shrinks into the net at once */
-.bfly .rot{width:100%;height:100%}
-.bfly svg,.bslot svg,.bcount svg,.gflower svg{width:100%;height:100%;display:block;overflow:visible}
-.bfly svg{filter:drop-shadow(0 6px 5px rgba(0,0,0,var(--sha,.22)))}
-/* Wings fold toward the body: slow while resting, fast while fleeing */
-.bfly .wings,.big .ico .wings{transform-origin:50px 50px;animation:bflap .34s ease-in-out infinite}
-.big .ico .wings{animation-duration:.7s}
-.bfly.rest .wings{animation-duration:2.4s}
-.bfly.flee .wings{animation-duration:.14s}
+/* Butterflies, their flowers and the "put me here" spots are drawn on the stage canvas (src/butterflies/look.ts) */
+.bcount svg{width:100%;height:100%;display:block;overflow:visible}
+/* Menu icon wings fold toward the body */
+.big .ico .wings{transform-origin:50px 50px;animation:bflap .7s ease-in-out infinite}
 @keyframes bflap{0%,100%{transform:scaleX(1)}50%{transform:scaleX(.2)}}
-.bfly.hint svg{filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 14px var(--c))}
-.bfly.hint .rot{animation:bhint .8s ease-in-out infinite}
-@keyframes bhint{50%{scale:1.22}}
-.gflower{position:absolute;left:0;top:0;transform-origin:50% 100%;animation:ggrow .9s cubic-bezier(.2,1.5,.4,1) both}
-.gflower .inner{width:100%;height:100%;transform-origin:50% 100%}
-.gflower svg{filter:drop-shadow(0 8px 6px rgba(0,0,0,.16))}
-.gflower .glow{opacity:0}
-.gflower.current .glow{animation:gglow 1.5s ease-in-out infinite}
-.gflower.nudge .inner{animation:gnudge .5s ease}
-.gflower.done .inner{animation:gcheer .7s cubic-bezier(.2,1.6,.4,1)}
-.gflower.wilt{animation:gwilt .6s ease-in forwards}
-@keyframes ggrow{from{transform:var(--at) scale(0) rotate(-10deg)}}   /* grows in its own spot (--at holds its position) */
-@keyframes gglow{0%,100%{opacity:.08}50%{opacity:.38}}
-@keyframes gnudge{25%{transform:rotate(-7deg) scale(1.06)}50%{transform:rotate(6deg) scale(1.08)}75%{transform:rotate(-3deg)}}
-@keyframes gcheer{40%{transform:scale(1.15)}}
-@keyframes gwilt{to{transform:var(--at) scale(0) rotate(12deg);opacity:0}}
-.bslot{position:absolute;left:0;top:0;pointer-events:none;animation:bslotIn .4s ease .6s both,bslot 1.3s ease-in-out 1s infinite}
-@keyframes bslotIn{from{opacity:0;scale:.4}to{opacity:.55;scale:.94}}
-@keyframes bslot{0%,100%{opacity:.55;scale:.94}50%{opacity:1;scale:1.04}}
 /* Counter beside the flower: one mini butterfly per butterfly needed, in the flower's own colour, filled as each lands */
 .bcount{position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:4px;padding:6px;border-radius:999px;
   background:var(--panel-a);box-shadow:0 4px 0 rgba(0,0,0,.1);transition:opacity .4s ease;animation:fadeIn .4s ease .5s both}   /* after the flower has grown */
@@ -817,10 +792,9 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 .nplay:focus-visible{outline:3px solid var(--net);outline-offset:3px}
 
 @media (prefers-reduced-motion:reduce){
-  .cloud,.hero{animation:none}
+  .hero{animation:none}
   .confetti{display:none}
   .overlay.show .card,.overlay.show .card *,.big::after,.ks-btn{animation:none !important}
-  .bfly .wings,.bfly.hint .rot,.bslot,.gflower.current .glow{animation:none}
   .ant.walk .ta,.ant.walk .tb,.ant.walk .antn,.ant.walk svg,.ant.bite .head,.ant.sniff .antn,.food.bob .in{animation:none}
   #newsBtn .cico,#newsBtn::after{animation:none}
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none !important}

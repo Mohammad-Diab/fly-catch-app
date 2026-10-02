@@ -1,6 +1,8 @@
 // @ts-nocheck   (legacy code, typed piece by piece as it moves into its own modules)
 import { BEE_SVG, FLY_SVG, PETALS, flowerSVG } from "./flies/art";
 import { drawBeeFlower, drawFlier, flowerGone, wantFliers, wantFlowers } from "./flies/look";
+import { BF_COLORS, addPageDefs, butterflySVG, gardenFlowerSVG } from "./butterflies/art";
+import { bugSize, drawBug, drawGarden, drawSlot, flap, gardenGone, wantBugs, wantGarden, wantSlots } from "./butterflies/look";
 import { bakeScenery, watchColours } from "./render/scenery";
 import { Stage } from "./render/stage";
 (() => {
@@ -9,7 +11,7 @@ import { Stage } from "./render/stage";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 35;
+  const BUILD = 36;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
@@ -158,8 +160,8 @@ import { Stage } from "./render/stage";
     if (isCh()) NET_R = Math.max(40, NET_R * CH.net);
     TOP_PAD = hud.getBoundingClientRect().height + 12;   // includes CSS zoom on large screens
     glass.style.setProperty("--fly", S + "px");
-    stage.resize(W, H); prepareArt();
-    bfMeasure(); bfLayout(); antMeasure();
+    stage.resize(W, H);
+    bfMeasure(); prepareArt(); bfLayout(); antMeasure();
     sizeNet(cursorNet);
     fitCards();
   }
@@ -168,6 +170,10 @@ import { Stage } from "./render/stage";
     const d = stage.dpr, pool = SIZES[MODE] || [];
     wantFliers([...pool.map(sc => ["fly", S * sc * d]), ...(MODE === "bees" ? pool.map(sc => ["bee", S * sc * d]) : [])]);
     if (MODE === "bees") wantFlowers(PETALS, S * 1.45 * d, d);
+    if (MODE === "butterflies") {
+      const ks = BF_COLORS.slice(0, LV().pool);
+      wantBugs(ks, B * 1.12 * d, d); wantGarden(ks, F * d, d); wantSlots(ks, B * .9 * d);
+    }
   }
   function bounds(h = S * 0.5) {
     return { minX: h + 6, maxX: W - h - 6, minY: TOP_PAD + h * 0.4, maxY: H - h - 6 };
@@ -611,15 +617,10 @@ import { Stage } from "./render/stage";
   }
 
   // ================= Butterfly garden =================
-  // Colour matching for toddlers: bold colours a two-year-old tells apart at a glance, each wearing a real butterfly's
-  // markings so colour-blind kids can match by shape. Red, blue and yellow come first; purple only joins in the later
-  // levels. No green (it vanishes against the grass), no orange or pink (too close to red and yellow)
-  const BF_COLORS = [
-    { id: "red",    c: "#F0282D", d: "#A3121A", pat: "eyes" },
-    { id: "blue",   c: "#1F6FFF", d: "#0E43B0", pat: "border" },
-    { id: "yellow", c: "#FFD60A", d: "#A88600", pat: "stripes" },
-    { id: "purple", c: "#8B2FE0", d: "#5A1596", pat: "band" },
-  ];
+  // Colours and pictures: src/butterflies/art.ts
+  addPageDefs();
+  document.querySelectorAll('[data-ico="butterfly"]').forEach(e => { e.innerHTML = butterflySVG(BF_COLORS[1]); });
+  document.querySelectorAll('[data-ico="flower"]').forEach(e => { e.innerHTML = gardenFlowerSVG(BF_COLORS[0]); });
   // Colours a young child still mixes up: never a flower of one with butterflies of the other on screen
   const BF_CLOSE = [["blue", "purple"]];
   const bfClose = (a, b) => BF_CLOSE.some(([x, y]) => (a.id === x && b.id === y) || (a.id === y && b.id === x));
@@ -643,82 +644,9 @@ import { Stage } from "./render/stage";
   ];
   const BF_HINT_AFTER = 4;   // seconds without a match before the right butterflies glow
   const BF_AFTER_CATCH = 2;   // seconds after a catch before the next butterfly flies in
-  const INK = "#2B2B33";
   const pick = a => a[Math.floor(Math.random() * a.length)];
-  const tint = (hex, a) => "#" + [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - a) + 255 * a).toString(16).padStart(2, "0")).join("");
-  const WING_UP = "M50 46C39 18 15 7 7 21 1 35 13 52 49 52Z";
-  const WING_LOW = "M49 53C30 54 14 66 20 82 25 94 42 86 49 62Z";
-  // Markings drawn on the left wings (mirrored for the right) and simplified on each petal
-  const MOTIF = {
-    eyes: k => ({   // peacock butterfly
-      up: `<circle cx="22" cy="27" r="11" fill="#FFE39A"/><circle cx="22" cy="27" r="7.5" fill="${INK}"/><circle cx="22" cy="27" r="4.2" fill="#6FA8FF"/><circle cx="20.4" cy="25" r="1.6" fill="#fff"/>`,
-      low: `<circle cx="31" cy="74" r="6" fill="${INK}"/><circle cx="31" cy="74" r="2.6" fill="#fff"/>`,
-      petal: `<circle cx="60" cy="17" r="7.5" fill="${INK}"/><circle cx="60" cy="17" r="3.8" fill="#6FA8FF"/>`,
-    }),
-    border: k => ({   // morpho
-      up: `<path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="12"/><g fill="#fff"><circle cx="10" cy="24" r="2.2"/><circle cx="14" cy="15" r="2"/><circle cx="23" cy="11" r="1.8"/><circle cx="9" cy="34" r="2"/></g>`,
-      low: `<path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="10"/><g fill="#fff"><circle cx="22" cy="80" r="2"/><circle cx="29" cy="87" r="1.8"/></g>`,
-      petal: `<ellipse cx="60" cy="24" rx="15" ry="22" fill="none" stroke="${INK}" stroke-width="8"/><circle cx="60" cy="6.5" r="2.2" fill="#fff"/>`,
-    }),
-    stripes: k => ({   // swallowtail
-      up: `<g stroke="${INK}" stroke-width="4.5" stroke-linecap="round"><path d="M44 16L30 50"/><path d="M33 10L19 47"/><path d="M22 8L8 40"/></g><path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="7"/>`,
-      low: `<path d="M44 58L30 86" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/><path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="7"/><circle cx="35" cy="83" r="2.8" fill="#5B8CFF"/>`,
-      petal: `<g stroke="${INK}" stroke-width="3.6"><path d="M44 14H76"/><path d="M44 28H76"/></g>`,
-    }),
-    band: k => ({   // purple emperor
-      up: `<path d="${WING_UP}" fill="none" stroke="${k.d}" stroke-width="9"/><path d="M42 22Q26 30 14 42" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`,
-      low: `<path d="M46 58Q36 70 28 82" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="70" r="4.2" fill="#FF9E3D"/><circle cx="26" cy="70" r="2" fill="${INK}"/>`,
-      petal: `<path d="M44 24H76" stroke="#fff" stroke-width="5.5"/>`,
-    }),
-    veins: k => ({   // birdwing
-      up: `<g fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"><path d="M49 48L12 20"/><path d="M49 48L20 12"/><path d="M49 48L7 32"/><path d="M49 48L32 10"/><path d="M49 48L12 44"/></g><path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="6"/>`,
-      low: `<g fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"><path d="M49 56L22 68"/><path d="M49 56L22 82"/><path d="M49 56L36 88"/></g><path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="6"/>`,
-      petal: `<g stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M60 46V6"/><path d="M60 30L50 15"/><path d="M60 30L70 15"/></g>`,
-    }),
-  };
-  document.querySelector("svg defs").insertAdjacentHTML("beforeend", `
-    <clipPath id="cu" clipPathUnits="userSpaceOnUse"><path d="${WING_UP}"/></clipPath>
-    <clipPath id="cl" clipPathUnits="userSpaceOnUse"><path d="${WING_LOW}"/></clipPath>
-    <clipPath id="cp" clipPathUnits="userSpaceOnUse"><ellipse cx="60" cy="24" rx="15" ry="22"/></clipPath>` +
-    BF_COLORS.map(k => `<radialGradient id="g-${k.id}" gradientUnits="userSpaceOnUse" cx="50" cy="50" r="48">
-      <stop offset="0" stop-color="${tint(k.c, .12)}"/><stop offset="1" stop-color="${k.c}"/></radialGradient>`).join(""));
 
-  // White sticker edge keeps a butterfly readable on its own flower; outline draws the dashed "put me here" spot
-  function butterflySVG(k, outline) {
-    let side;
-    if (outline) {
-      const w = d => `<path d="${d}" fill="${k.c}" fill-opacity=".25" stroke="${k.d}" stroke-width="2.6" stroke-dasharray="5 4" stroke-linejoin="round"/>`;
-      side = w(WING_UP) + w(WING_LOW);
-    } else {
-      const m = MOTIF[k.pat](k);
-      const w = (d, clip, deco) => `<path d="${d}" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>
-        <path d="${d}" fill="url(#g-${k.id})"/><g clip-path="url(#${clip})">${deco}</g>
-        <path d="${d}" fill="none" stroke="${k.d}" stroke-width="1.6" stroke-linejoin="round"/>`;
-      side = w(WING_UP, "cu", m.up) + w(WING_LOW, "cl", m.low);
-    }
-    const body = outline
-      ? `<ellipse cx="50" cy="55" rx="5" ry="24" fill="none" stroke="${k.d}" stroke-width="2.4" stroke-dasharray="4 4"/>`
-      : `<path d="M47 28Q41 13 33 9M53 28Q59 13 67 9" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-         <circle cx="33" cy="9" r="2.8" fill="${INK}"/><circle cx="67" cy="9" r="2.8" fill="${INK}"/>
-         <ellipse cx="50" cy="57" rx="4.6" ry="23" fill="#3A2E2A"/><circle cx="50" cy="31" r="6.4" fill="#3A2E2A"/>
-         <circle cx="47.8" cy="29.6" r="1.5" fill="#fff"/><circle cx="52.2" cy="29.6" r="1.5" fill="#fff"/>`;
-    return `<svg viewBox="0 0 100 100" aria-hidden="true"><g class="wings"><g>${side}</g><g transform="matrix(-1 0 0 1 100 0)">${side}</g></g>${body}</svg>`;
-  }
-  function gardenFlowerSVG(k) {
-    const m = MOTIF[k.pat](k);
-    const petals = [0, 60, 120, 180, 240, 300].map(a =>
-      `<g transform="rotate(${a} 60 50)"><ellipse cx="60" cy="24" rx="15" ry="22" fill="${tint(k.c, .12)}"/>
-       <g clip-path="url(#cp)">${m.petal}</g>
-       <ellipse cx="60" cy="24" rx="15" ry="22" fill="none" stroke="${k.d}" stroke-width="2.4"/></g>`).join("");   // dark edge keeps each strong-coloured petal distinct
-    return `<svg viewBox="0 0 120 140" aria-hidden="true">
-      <path d="M60 70Q56 105 60 138" stroke="#3F9B53" stroke-width="7" fill="none" stroke-linecap="round"/>
-      <path d="M60 112Q80 96 95 103Q82 120 60 117Z" fill="#5FBF5A"/><path d="M60 100Q40 86 26 92Q38 108 60 106Z" fill="#5FBF5A"/>
-      <circle class="glow" cx="60" cy="50" r="56" fill="${k.c}"/>${petals}
-      <circle cx="60" cy="50" r="14" fill="#FFF3C4" stroke="${k.d}" stroke-width="2"/></svg>`;
-  }
-  document.querySelectorAll('[data-ico="butterfly"]').forEach(e => { e.innerHTML = butterflySVG(BF_COLORS[1]); });
-  document.querySelectorAll('[data-ico="flower"]').forEach(e => { e.innerHTML = gardenFlowerSVG(BF_COLORS[0]); });
-
+  let garden = [];   // every garden flower on screen, wilting ones too (bfFlowers holds only the ones still in play)
   let bugs = [], bfCarries = [], bfOnClear = null, bfSpawnT = 0, bfFlowers = [], bfPartN = 1, bfSet = null, bfSeen = [], bfHintT = 0, B = 80, F = 140;
   // Every part of a stage picks random colours from its level's pool: the flowers' colours, then the ones with no flower.
   // Close colours never meet as "right" and "wrong"; among the choices left, flower colours not shown yet come first
@@ -759,15 +687,9 @@ import { Stage } from "./render/stage";
     const fh = F * 140 / 120, rtl = document.documentElement.dir === "rtl", two = bfPartN > 1;
     for (const fl of bfFlowers) {
       const h = bfHead(fl);
-      fl.el.style.width = F + "px"; fl.el.style.height = fh + "px";
-      fl.el.style.transform = `translate(${h.x - F / 2}px,${H - fh * .98}px)`;
-      fl.el.style.setProperty("--at", fl.el.style.transform);
+      fl.at = { x: h.x, base: H - fh * .98 + fh, F };
       fl.bugs.forEach((b, j) => { if (b.state === "rest") { const p = bfSlot(fl, j); b.x = p.x; b.y = p.y; } });
-      if (fl.slot) {
-        const p = bfSlot(fl, fl.bugs.length), s = B * .9;
-        fl.slot.style.width = fl.slot.style.height = s + "px";
-        fl.slot.style.transform = `translate(${p.x - s / 2}px,${p.y - s / 2}px)`;
-      }
+      fl.slotAt = fl.slotOn ? bfSlot(fl, fl.bugs.length) : null;
       // The counter sits beside its flower: on the reading-end side for one flower, on the outer side for two
       const side = two ? (fl.i ? 1 : -1) : (rtl ? -1 : 1), x = h.x + side * F * .56;
       fl.count.style.setProperty("--m", B * .42 + "px");
@@ -784,36 +706,29 @@ import { Stage } from "./render/stage";
     if (Math.random() < .5) ks.reverse();   // the two flowers swap sides now and then
     bfPartN = ks.length;
     bfFlowers = ks.map((k, i) => {
-      const el = document.createElement("div");
-      el.className = "gflower current";
-      el.innerHTML = `<div class="inner">${gardenFlowerSVG(k)}</div>`;
-      const slot = document.createElement("div");
-      slot.className = "bslot"; slot.innerHTML = butterflySVG(k, true);
       const count = document.createElement("div");
       count.className = "bcount";
       count.style.setProperty("--k", k.d);
       count.innerHTML = `<b class="n" dir="ltr">0/${LV().per}</b>` +
         Array.from({ length: LV().per }, () => `<i>${butterflySVG(k, true)}</i>`).join("");
-      flora.append(el, slot, count);
-      return { k, i, el, slot, count, bugs: [], per: LV().per };
+      flora.append(count);
+      return { k, i, count, bugs: [], per: LV().per, t: 0, at: null, current: true, nudgeAt: -1, doneAt: -1, wiltAt: -1,
+        slotOn: true, slotAt: null };
     });
-    bfMeasure(); bfLayout(); bfHintT = 0;
+    garden.push(...bfFlowers);
+    bfMeasure(); prepareArt(); bfLayout(); bfHintT = 0;
     bfSpawnT = .7;   // the first butterfly comes once the flower has grown
     sfx.bfBloom();
     bfRefill();
   }
   const BF_SIZES = [.9, 1, 1.12];
   function bfSpawn(k) {
-    const el = document.createElement("div"), size = B * pick(BF_SIZES);
-    el.className = "bfly";
-    el.style.setProperty("--s", size + "px"); el.style.setProperty("--c", k.c);
-    el.innerHTML = `<div class="rot">${butterflySVG(k)}</div>`;
-    el.querySelector(".wings").style.animationDelay = -rand(0, 1) + "s";
-    layer.appendChild(el);
+    const size = B * pick(BF_SIZES);
     const band = bfBand(), left = Math.random() < .5;
-    const b = { el, rot: el.firstElementChild, k, x: left ? -B * .3 : W + B * .3, y: rand(band.minY, band.maxY),
+    const b = { k, size, sz0: size, szAt: -99, szDur: .8, ph: Math.random(), flee: false, rest: false, carried: false,
+      hint: false, hintAt: 0, x: left ? -B * .3 : W + B * .3, y: rand(band.minY, band.maxY),
       heading: left ? rand(-.4, .4) : Math.PI + rand(-.4, .4), turn: 0, t: rand(0, 9), wob: rand(0, 6.3),
-      state: "fly", entered: false, fleeT: 0, deg: 0, tw: null, spdK: rand(.85, 1.15), size, bump: 0,
+      state: "fly", entered: false, fleeT: 0, deg: 0, tw: null, spdK: rand(.85, 1.15), bump: 0,
       voice: sfx.voice("butterfly"), vl: -1, vp: 9, vr: 0 };
     b.target = b.heading;
     bugs.push(b);
@@ -821,7 +736,7 @@ import { Stage } from "./render/stage";
   const bfFree = () => bugs.filter(b => (b.state === "fly" || b.state === "flee") && !b.leaving);
   function bfLeave(b) {
     b.state = "flee"; b.fleeT = 99; b.leaving = true; b.entered = false;
-    b.heading = b.target = b.x < W / 2 ? Math.PI : 0; b.el.classList.remove("rest", "hint"); b.el.classList.add("flee");
+    b.heading = b.target = b.x < W / 2 ? Math.PI : 0; b.rest = false; b.hint = false; b.flee = true;
   }
   // Every flower that still needs butterflies gets at least one of its colour in the air, never more than it still needs;
   // the rest are colours with no flower (a full flower's colour stops coming, so it never turns "wrong").
@@ -861,9 +776,9 @@ import { Stage } from "./render/stage";
     bfSpawnStep(dt);
     bfCarries.slice().forEach(c => bfCarryStep(c, dt));
     for (const b of bugs) {
-      b.t += dt;
+      b.t += dt; flap(b, dt);
       if (b.state === "fly" || b.state === "flee") {
-        if (b.state === "flee" && (b.fleeT -= dt) <= 0) { b.state = "fly"; b.el.classList.remove("flee"); }
+        if (b.state === "flee" && (b.fleeT -= dt) <= 0) { b.state = "fly"; b.flee = false; }
         if (b.state === "fly" && (b.turn -= dt) <= 0) {
           b.target = Math.atan2(rand(band.minY, band.maxY) - b.y, rand(band.minX, band.maxX) - b.x);
           b.turn = rand(1.2, 2.6);
@@ -886,15 +801,16 @@ import { Stage } from "./render/stage";
       } else if (b.state === "rest") {
         b.deg = Math.sin(b.t * 1.3 + b.wob) * 4;
       }
-      b.el.style.transform = `translate3d(${b.x - b.size / 2}px,${b.y - b.size / 2}px,0)`;
-      b.rot.style.transform = `rotate(${b.deg}deg)`;
     }
     bfCollide(dt);
-    if (bugs.some(b => b.gone)) bugs = bugs.filter(b => { if (b.gone) { b.el.remove(); if (b.voice) b.voice.stop(); } return !b.gone; });
+    if (bugs.some(b => b.gone)) bugs = bugs.filter(b => { if (b.gone && b.voice) b.voice.stop(); return !b.gone; });
     if (bfOnClear && !bugs.length) { const fn = bfOnClear; bfOnClear = null; fn(); }
     if (bfFlowers.length && running) {
       bfHintT += dt;
-      if (bfHintT > BF_HINT_AFTER) { const ks = bfOpen().map(fl => fl.k); bfFree().forEach(b => b.el.classList.toggle("hint", ks.includes(b.k))); }
+      if (bfHintT > BF_HINT_AFTER) {
+        const ks = bfOpen().map(fl => fl.k);
+        bfFree().forEach(b => { const on = ks.includes(b.k); if (on && !b.hint) b.hintAt = b.t; b.hint = on; });
+      }
     }
   }
   // Soft collisions between flying butterflies: no overlap, each turns away (carried and resting ones are left alone)
@@ -933,8 +849,8 @@ import { Stage } from "./render/stage";
     list.forEach((b, i) => {
       const j = fl.bugs.length;
       fl.bugs.push(b);
-      b.state = "toFlower"; b.el.classList.remove("hint"); b.el.classList.add("flee", "carried");   // flutters hard while caught
-      b.size = small; b.el.style.setProperty("--s", small + "px");
+      b.state = "toFlower"; b.hint = false; b.flee = true; b.carried = true;   // flutters hard while caught
+      bugSize(b, small);
       b.tw = c;
       c.members.push({ b, j, x0: b.x, y0: b.y, off: BAG_SPOTS[i % BAG_SPOTS.length] });
     });
@@ -942,8 +858,8 @@ import { Stage } from "./render/stage";
     bfCarryStep(c, 0);
     bfSpawnT = Math.max(bfSpawnT, BF_AFTER_CATCH);   // a calm moment: the next one only comes once this one is on its way
     sfx.bfCatch();
-    bugs.forEach(x => x.el.classList.remove("hint")); bfHintT = 0;
-    if (fl.bugs.length >= fl.per) { if (fl.slot) fl.slot.remove(); fl.slot = null; }
+    bugs.forEach(x => { x.hint = false; }); bfHintT = 0;
+    if (fl.bugs.length >= fl.per) { fl.slotOn = false; fl.slotAt = null; }
     else bfLayout();
     bfRefill();
   }
@@ -968,7 +884,7 @@ import { Stage } from "./render/stage";
       if (!c.out) {
         c.out = true;
         c.net.animate([{ rotate: "0deg", opacity: 1 }, { rotate: "30deg", opacity: 0 }], { duration: RELEASE * 1000, easing: "ease-in", fill: "forwards" });
-        c.members.forEach(m => { m.b.el.classList.remove("flee"); m.b.size = B * .9; m.b.el.style.setProperty("--s", m.b.size + "px"); });
+        c.members.forEach(m => { m.b.flee = false; bugSize(m.b, B * .9); });
       }
     }
     if (!c.out) c.net.style.rotate = rot + "deg";
@@ -993,7 +909,7 @@ import { Stage } from "./render/stage";
     }
   }
   function bfLand(b, j) {
-    b.state = "rest"; b.el.classList.remove("carried"); b.el.classList.add("rest");
+    b.state = "rest"; b.carried = false; b.rest = true;
     const fl = b.tw.fl, mini = fl.count.querySelectorAll("i")[j], n = fl.count.querySelector(".n");
     if (mini) { mini.innerHTML = butterflySVG(fl.k); mini.classList.add("on"); }
     n.textContent = `${fl.bugs.filter(x => x.state === "rest").length}/${fl.per}`;
@@ -1014,18 +930,18 @@ import { Stage } from "./render/stage";
   }
   // Wilts a flower away while its own butterflies fly off upward
   function bfWilt(fl, then) {
-    fl.el.classList.add("wilt"); fl.count.classList.add("gone");
+    fl.wiltAt = fl.t; fl.count.classList.add("gone");
     fl.bugs.forEach(b => {
       b.state = "flee"; b.fleeT = 99; b.leaving = true; b.entered = false;
-      b.heading = b.target = -Math.PI / 2 + rand(-.9, .9); b.el.classList.remove("rest"); b.el.classList.add("flee");
+      b.heading = b.target = -Math.PI / 2 + rand(-.9, .9); b.rest = false; b.flee = true;
     });
-    bfLater(() => { fl.el.remove(); fl.count.remove(); if (then) then(); }, 650);
+    bfLater(() => { garden = garden.filter(x => x !== fl); fl.count.remove(); if (then) then(); }, 650);
   }
   // A full flower cheers and earns its HUD star. With two flowers, a full one wilts away on its own so the child's eyes
   // move to the one still waiting; the part ends when every flower is full
   function bfFlowerFull(fl) {
     fl.done = true;
-    fl.el.classList.remove("current"); fl.el.classList.add("done");
+    fl.current = false; fl.doneAt = fl.t;
     const h = bfHead(fl); burst(h.x, h.y, F * .6);
     sfx.bfDone();
     caughtInLevel++;
@@ -1059,13 +975,13 @@ import { Stage } from "./render/stage";
   }
   // Scares a butterfly a little way off from the net
   function bfShoo(b, px, py) {
-    b.state = "flee"; b.fleeT = .7; b.el.classList.add("flee");
+    b.state = "flee"; b.fleeT = .7; b.flee = true;
     b.heading = b.target = Math.atan2(b.y - py, b.x - px) + rand(-.3, .3);
   }
   // A colour with no flower gets the same clear "No!" as a bee: badge, red edge glow and the "nuh-uh" sound
   function bfWrong(b, px, py) {
     bfShoo(b, px, py);
-    bfFlowers.forEach(fl => { const e = fl.el; e.classList.remove("nudge"); void e.offsetWidth; e.classList.add("nudge"); });
+    bfFlowers.forEach(fl => { fl.nudgeAt = fl.t; });
     beeAlert(b.x, b.y, "wrongBf");
     miss.sayNow();
   }
@@ -1089,8 +1005,8 @@ import { Stage } from "./render/stage";
   }
   function bfFlyAway() { bugs.filter(b => b.state === "fly" || b.state === "flee").forEach(bfLeave); }
   function bfClear() {
-    bugs.forEach(b => { b.el.remove(); if (b.voice) b.voice.stop(); if (b.tw && b.tw.net) b.tw.net.remove(); });
-    bugs = []; bfCarries = []; bfOnClear = null; bfFlowers = []; bfSet = null; bfSeen = [];
+    bugs.forEach(b => { if (b.voice) b.voice.stop(); if (b.tw && b.tw.net) b.tw.net.remove(); });
+    bugs = []; bfCarries = []; bfOnClear = null; bfFlowers = []; garden = []; bfSet = null; bfSeen = [];
   }
 
   // ================= Feed the ants =================
@@ -2165,7 +2081,7 @@ import { Stage } from "./render/stage";
   // Only each cloud's picture moves; its box stays put and keeps the size from the CSS.
   // Each crosses from just off the left edge to just off the right one (window width + 1.2x its width), then comes round
   function moveClouds(dt) {
-    cloudT += dt;
+    if (!calm.matches) cloudT += dt;
     cloudEls.forEach((c, i) => {
       const w = cloudW[i], pic = c.firstElementChild;
       cloudX[i] = -1.1 * w + ((cloudT + CLOUD_START[i]) * CLOUD_PX_S[i]) % (innerWidth + w * 1.2);
@@ -2204,9 +2120,12 @@ import { Stage } from "./render/stage";
 
   // ================= Main loop =================
   function drawStage() {
-    if (!stage.begin(flies.length > 0 || beeFlowers.length > 0)) return;
+    if (!stage.begin(flies.length > 0 || beeFlowers.length > 0 || bugs.length > 0 || garden.length > 0)) return;
     const x = stage.x, d = stage.dpr;
     for (const fl of beeFlowers) drawBeeFlower(x, fl);
+    for (const fl of garden) if (!gardenGone(fl)) drawGarden(x, fl);
+    for (const fl of garden) if (fl.slotAt) drawSlot(x, fl.k, fl.slotAt.x, fl.slotAt.y, B * .9, fl.t);
+    for (const b of bugs) drawBug(x, b, sha);
     for (const f of flies) if (!f.top) drawFlier(x, f, S * f.sc, sha, d);
     for (const f of flies) if (f.top) drawFlier(x, f, S * f.sc, sha, d);   // a caught fly stays in front
   }
@@ -2232,7 +2151,7 @@ import { Stage } from "./render/stage";
     if (!paused && !document.hidden && flies.length) step(dt);
     if (!paused && !document.hidden && (bugs.length || bfFlowers.length)) bfStep(dt);
     if (!paused && !document.hidden && MODE === "ants" && (running || ants.length)) antStep(dt);
-    if (!paused && !document.hidden) { moveClouds(dt); for (const fl of beeFlowers) fl.t += dt; }
+    if (!paused && !document.hidden) { moveClouds(dt); for (const fl of beeFlowers) fl.t += dt; for (const fl of garden) fl.t += dt; }
     if (beeFlowers.some(flowerGone)) beeFlowers = beeFlowers.filter(fl => !flowerGone(fl));
     if (t - lastLight > 100) { lastLight = t; updateLight(); }   // 10 times a second is enough
     if (!document.hidden && (!paused || stage.dirty)) drawStage();
@@ -2248,7 +2167,7 @@ import { Stage } from "./render/stage";
     // Butterflies flutter softly while flying, faster when scared or carried, and go quiet on their flower
     for (const b of bugs) {
       if (!b.voice) continue;
-      const fast = b.el.classList.contains("flee"), still = b.state === "rest";
+      const fast = b.flee, still = b.state === "rest";
       const lv = paused || still ? 0 : BF_FLUTTER * Math.sqrt(b.size / B) * (b.state === "toFlower" ? .7 : 1);
       const p = clamp((b.x / W) * 2 - 1, -1, 1) * PAN_MAX, r = fast ? 7 : 2.9;
       if (Math.abs(lv - b.vl) > .0005 || Math.abs(p - b.vp) > .02 || r !== b.vr) { b.vl = lv; b.vp = p; b.vr = r; b.voice.set(lv, p, r); }

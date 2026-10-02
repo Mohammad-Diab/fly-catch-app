@@ -95,6 +95,8 @@
   var linear = (x) => x;
   var easeIn = cubicBezier(0.42, 0, 1, 1);
   var easeOut = cubicBezier(0, 0, 0.58, 1);
+  var easeInOut = cubicBezier(0.42, 0, 0.58, 1);
+  var ease = cubicBezier(0.25, 0.1, 0.25, 1);
   function keyframes(frames, u, e = linear) {
     const first = frames[0], lastRow = frames[frames.length - 1];
     if (u <= first[0]) return first.slice(1);
@@ -155,6 +157,39 @@
     x.drawImage(src, 0, 0);
     return c;
   }
+  var PicCache = class {
+    constructor() {
+      this.ready = /* @__PURE__ */ new Map();
+      this.making = /* @__PURE__ */ new Set();
+      this.near = /* @__PURE__ */ new Map();
+      this.gen = 0;
+    }
+    get(key2, make, group = "") {
+      const r = this.ready.get(key2);
+      if (r) return r;
+      if (!this.making.has(key2)) {
+        this.making.add(key2);
+        const g = this.gen;
+        make().then((v) => {
+          this.making.delete(key2);
+          if (g !== this.gen) return;
+          this.ready.set(key2, v);
+          this.near.set(group, v);
+        }, () => this.making.delete(key2));
+      }
+      return this.near.get(group);
+    }
+    // Drops pictures that are no longer wanted, e.g. old sizes after a resize; the near ones stay until replaced
+    keepOnly(wanted) {
+      for (const k of [...this.ready.keys()]) if (!wanted(k)) this.ready.delete(k);
+    }
+    clear() {
+      this.ready.clear();
+      this.making.clear();
+      this.near.clear();
+      this.gen++;
+    }
+  };
 
   // src/flies/look.ts
   var RAD = Math.PI / 180;
@@ -175,8 +210,8 @@
       const img = padded(await svgImage(wingsAt(kind, ph), px, px), px, px, pad);
       return { img, sh: silhouette(img, px * 0.06) };
     };
-    const [still, ...flap] = await Promise.all([frame(null), ...Array.from({ length: PHASES }, (_, i) => frame(i / (PHASES - 1)))]);
-    return { px, still, flap };
+    const [still, ...flap2] = await Promise.all([frame(null), ...Array.from({ length: PHASES }, (_, i) => frame(i / (PHASES - 1)))]);
+    return { px, still, flap: flap2 };
   }
   function startFliers(kind, px) {
     const k = key(kind, px);
@@ -309,6 +344,235 @@
     x.restore();
   }
 
+  // src/butterflies/art.ts
+  var BF_COLORS = [
+    { id: "red", c: "#F0282D", d: "#A3121A", pat: "eyes" },
+    { id: "blue", c: "#1F6FFF", d: "#0E43B0", pat: "border" },
+    { id: "yellow", c: "#FFD60A", d: "#A88600", pat: "stripes" },
+    { id: "purple", c: "#8B2FE0", d: "#5A1596", pat: "band" }
+  ];
+  var INK = "#2B2B33";
+  var tint = (hex, a) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - a) + 255 * a).toString(16).padStart(2, "0")).join("");
+  var WING_UP = "M50 46C39 18 15 7 7 21 1 35 13 52 49 52Z";
+  var WING_LOW = "M49 53C30 54 14 66 20 82 25 94 42 86 49 62Z";
+  var MOTIF = {
+    eyes: (k) => ({
+      // peacock butterfly
+      up: `<circle cx="22" cy="27" r="11" fill="#FFE39A"/><circle cx="22" cy="27" r="7.5" fill="${INK}"/><circle cx="22" cy="27" r="4.2" fill="#6FA8FF"/><circle cx="20.4" cy="25" r="1.6" fill="#fff"/>`,
+      low: `<circle cx="31" cy="74" r="6" fill="${INK}"/><circle cx="31" cy="74" r="2.6" fill="#fff"/>`,
+      petal: `<circle cx="60" cy="17" r="7.5" fill="${INK}"/><circle cx="60" cy="17" r="3.8" fill="#6FA8FF"/>`
+    }),
+    border: (k) => ({
+      // morpho
+      up: `<path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="12"/><g fill="#fff"><circle cx="10" cy="24" r="2.2"/><circle cx="14" cy="15" r="2"/><circle cx="23" cy="11" r="1.8"/><circle cx="9" cy="34" r="2"/></g>`,
+      low: `<path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="10"/><g fill="#fff"><circle cx="22" cy="80" r="2"/><circle cx="29" cy="87" r="1.8"/></g>`,
+      petal: `<ellipse cx="60" cy="24" rx="15" ry="22" fill="none" stroke="${INK}" stroke-width="8"/><circle cx="60" cy="6.5" r="2.2" fill="#fff"/>`
+    }),
+    stripes: (k) => ({
+      // swallowtail
+      up: `<g stroke="${INK}" stroke-width="4.5" stroke-linecap="round"><path d="M44 16L30 50"/><path d="M33 10L19 47"/><path d="M22 8L8 40"/></g><path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="7"/>`,
+      low: `<path d="M44 58L30 86" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/><path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="7"/><circle cx="35" cy="83" r="2.8" fill="#5B8CFF"/>`,
+      petal: `<g stroke="${INK}" stroke-width="3.6"><path d="M44 14H76"/><path d="M44 28H76"/></g>`
+    }),
+    band: (k) => ({
+      // purple emperor
+      up: `<path d="${WING_UP}" fill="none" stroke="${k.d}" stroke-width="9"/><path d="M42 22Q26 30 14 42" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`,
+      low: `<path d="M46 58Q36 70 28 82" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="70" r="4.2" fill="#FF9E3D"/><circle cx="26" cy="70" r="2" fill="${INK}"/>`,
+      petal: `<path d="M44 24H76" stroke="#fff" stroke-width="5.5"/>`
+    }),
+    veins: (k) => ({
+      // birdwing
+      up: `<g fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"><path d="M49 48L12 20"/><path d="M49 48L20 12"/><path d="M49 48L7 32"/><path d="M49 48L32 10"/><path d="M49 48L12 44"/></g><path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="6"/>`,
+      low: `<g fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"><path d="M49 56L22 68"/><path d="M49 56L22 82"/><path d="M49 56L36 88"/></g><path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="6"/>`,
+      petal: `<g stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M60 46V6"/><path d="M60 30L50 15"/><path d="M60 30L70 15"/></g>`
+    })
+  };
+  function butterflySVG(k, outline = false, wingScale2 = 1) {
+    let side;
+    if (outline) {
+      const w = (d) => `<path d="${d}" fill="${k.c}" fill-opacity=".25" stroke="${k.d}" stroke-width="2.6" stroke-dasharray="5 4" stroke-linejoin="round"/>`;
+      side = w(WING_UP) + w(WING_LOW);
+    } else {
+      const m = MOTIF[k.pat](k);
+      const w = (d, clip, deco) => `<path d="${d}" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>
+      <path d="${d}" fill="url(#g-${k.id})"/><g clip-path="url(#${clip})">${deco}</g>
+      <path d="${d}" fill="none" stroke="${k.d}" stroke-width="1.6" stroke-linejoin="round"/>`;
+      side = w(WING_UP, "cu", m.up) + w(WING_LOW, "cl", m.low);
+    }
+    const body = outline ? `<ellipse cx="50" cy="55" rx="5" ry="24" fill="none" stroke="${k.d}" stroke-width="2.4" stroke-dasharray="4 4"/>` : `<path d="M47 28Q41 13 33 9M53 28Q59 13 67 9" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+       <circle cx="33" cy="9" r="2.8" fill="${INK}"/><circle cx="67" cy="9" r="2.8" fill="${INK}"/>
+       <ellipse cx="50" cy="57" rx="4.6" ry="23" fill="#3A2E2A"/><circle cx="50" cy="31" r="6.4" fill="#3A2E2A"/>
+       <circle cx="47.8" cy="29.6" r="1.5" fill="#fff"/><circle cx="52.2" cy="29.6" r="1.5" fill="#fff"/>`;
+    const wings = wingScale2 === 1 ? `<g class="wings">` : `<g transform="translate(50 0) scale(${wingScale2} 1) translate(-50 0)">`;
+    return `<svg viewBox="0 0 100 100" aria-hidden="true">${wings}<g>${side}</g><g transform="matrix(-1 0 0 1 100 0)">${side}</g></g>${body}</svg>`;
+  }
+  function gardenFlowerSVG(k, glow) {
+    const m = MOTIF[k.pat](k);
+    const petals = [0, 60, 120, 180, 240, 300].map((a) => `<g transform="rotate(${a} 60 50)"><ellipse cx="60" cy="24" rx="15" ry="22" fill="${tint(k.c, 0.12)}"/>
+     <g clip-path="url(#cp)">${m.petal}</g>
+     <ellipse cx="60" cy="24" rx="15" ry="22" fill="none" stroke="${k.d}" stroke-width="2.4"/></g>`).join("");
+    return `<svg viewBox="0 0 120 140" aria-hidden="true">
+    <path d="M60 70Q56 105 60 138" stroke="#3F9B53" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M60 112Q80 96 95 103Q82 120 60 117Z" fill="#5FBF5A"/><path d="M60 100Q40 86 26 92Q38 108 60 106Z" fill="#5FBF5A"/>
+    <circle class="glow" cx="60" cy="50" r="56" fill="${k.c}"${glow === void 0 ? "" : ` style="opacity:${glow}"`}/>${petals}
+    <circle cx="60" cy="50" r="14" fill="#FFF3C4" stroke="${k.d}" stroke-width="2"/></svg>`;
+  }
+  var defsFor = (ks) => `
+  <clipPath id="cu" clipPathUnits="userSpaceOnUse"><path d="${WING_UP}"/></clipPath>
+  <clipPath id="cl" clipPathUnits="userSpaceOnUse"><path d="${WING_LOW}"/></clipPath>
+  <clipPath id="cp" clipPathUnits="userSpaceOnUse"><ellipse cx="60" cy="24" rx="15" ry="22"/></clipPath>` + ks.map((k) => `<radialGradient id="g-${k.id}" gradientUnits="userSpaceOnUse" cx="50" cy="50" r="48">
+    <stop offset="0" stop-color="${tint(k.c, 0.12)}"/><stop offset="1" stop-color="${k.c}"/></radialGradient>`).join("");
+  function addPageDefs() {
+    document.querySelector("svg defs").insertAdjacentHTML("beforeend", defsFor(BF_COLORS));
+  }
+  var standalone = (svg, k) => svg.replace(/<svg([^>]*)>/, `<svg$1><defs>${defsFor([k])}</defs>`);
+
+  // src/render/motion.ts
+  var calm = matchMedia("(prefers-reduced-motion: reduce)");
+
+  // src/butterflies/look.ts
+  var RAD2 = Math.PI / 180;
+  function bugSize(b, s) {
+    b.sz0 = shownSize(b);
+    b.size = s;
+    b.szAt = b.t;
+    b.szDur = b.carried ? 0.15 : 0.8;
+  }
+  var shownSize = (b) => b.sz0 + (b.size - b.sz0) * ease(Math.min(1, (b.t - b.szAt) / b.szDur));
+  function flap(b, dt) {
+    b.ph = calm.matches ? 0 : (b.ph + dt / (b.flee ? 0.14 : b.rest ? 2.4 : 0.34)) % 1;
+  }
+  var WING_STEPS = 7;
+  function wingScale(ph) {
+    return ph < 0.5 ? 1 - 0.8 * easeInOut(ph * 2) : 0.2 + 0.8 * easeInOut(ph * 2 - 1);
+  }
+  var bugSets = new PicCache();
+  async function makeBugs(k, px, dpr) {
+    const pad = Math.ceil(24 * dpr);
+    const frames = await Promise.all(Array.from({ length: WING_STEPS }, async (_, i) => {
+      const s = 0.2 + 0.8 * i / (WING_STEPS - 1);
+      const img = padded(await svgImage(standalone(butterflySVG(k, false, s), k), px, px), px, px, pad);
+      return { img, sh: silhouette(img, 5 * dpr) };
+    }));
+    return { px, dpr, frames };
+  }
+  var bugKey = (k, px) => k.id + "|" + Math.round(px);
+  var bugPx = 0;
+  var bugDpr = 1;
+  function wantBugs(ks, px, dpr) {
+    bugPx = Math.round(px);
+    bugDpr = dpr;
+    const keys = new Set(ks.map((k) => bugKey(k, bugPx)));
+    bugSets.keepOnly((key2) => keys.has(key2));
+    ks.forEach((k) => bugSets.get(bugKey(k, bugPx), () => makeBugs(k, bugPx, dpr), k.id));
+  }
+  function glowOf(f, k, dpr) {
+    if (!f.glow) f.glow = withShadow(withShadow(f.img, 0, 0, 5 * dpr, "#fff"), 0, 0, 14 * dpr, k.c);
+    return f.glow;
+  }
+  var HINT = [[0, 1], [0.5, 1.22], [1, 1]];
+  function drawBug(x, b, sha) {
+    const set = bugSets.get(bugKey(b.k, bugPx), () => makeBugs(b.k, bugPx, bugDpr), b.k.id);
+    if (!set) return;
+    const s = wingScale(b.ph), fr = set.frames[Math.round((s - 0.2) / 0.8 * (WING_STEPS - 1))];
+    const q = shownSize(b) / set.px, D = fr.img.width * q, o = -D / 2;
+    x.save();
+    x.translate(b.x, b.y);
+    x.rotate(b.deg * RAD2);
+    if (b.hint) {
+      const p = calm.matches ? 1 : keyframes(HINT, (b.t - b.hintAt) / 0.8 % 1, easeInOut)[0];
+      x.scale(p, p);
+      x.drawImage(glowOf(fr, b.k, set.dpr), o, o, D, D);
+    } else {
+      if (sha > 0) {
+        x.globalAlpha = sha;
+        x.drawImage(fr.sh, o, o + 6, D, D);
+        x.globalAlpha = 1;
+      }
+      x.drawImage(fr.img, o, o, D, D);
+    }
+    x.restore();
+  }
+  var GLOWS = 6;
+  var flowerSets = new PicCache();
+  var flowerPx = 0;
+  var flowerDpr = 1;
+  async function makeFlower(k, px, dpr, glow) {
+    const h = Math.round(px * 140 / 120), pad = Math.ceil(20 * dpr);
+    const img = await svgImage(standalone(gardenFlowerSVG(k, glow), k), px, h);
+    return withShadow(padded(img, px, h, pad), 0, 8 * dpr, 6 * dpr, "rgba(0,0,0,.16)");
+  }
+  var glowLevel = (i) => i ? 0.08 + 0.3 * (i - 1) / (GLOWS - 1) : 0;
+  async function makeFlowers(k, px, dpr) {
+    const pics = await Promise.all(Array.from({ length: GLOWS + 1 }, (_, i) => makeFlower(k, px, dpr, glowLevel(i))));
+    return { px, pad: Math.ceil(20 * dpr), pics };
+  }
+  var flowerKey = (k, px) => k.id + "|" + Math.round(px);
+  function wantGarden(ks, px, dpr) {
+    flowerPx = Math.round(px);
+    flowerDpr = dpr;
+    const keys = new Set(ks.map((k) => flowerKey(k, px)));
+    flowerSets.keepOnly((key2) => keys.has(key2));
+    ks.forEach((k) => flowerSets.get(flowerKey(k, px), () => makeFlowers(k, flowerPx, dpr), k.id));
+  }
+  var GROW = [[0, 0, -10], [1, 1, 0]];
+  var WILT2 = [[0, 1, 0, 1], [1, 0, 12, 0]];
+  var NUDGE = [[0, 1, 0], [0.25, 1.06, -7], [0.5, 1.08, 6], [0.75, 1, -3], [1, 1, 0]];
+  var CHEER = [[0, 1], [0.4, 1.15], [1, 1]];
+  var GLOW = [[0, 0.08], [0.5, 0.38], [1, 0.08]];
+  var growEase = cubicBezier(0.2, 1.5, 0.4, 1);
+  var cheerEase = cubicBezier(0.2, 1.6, 0.4, 1);
+  var gardenGone = (fl) => fl.wiltAt >= 0 && fl.t - fl.wiltAt >= 0.6;
+  function drawGarden(x, fl) {
+    if (!fl.at) return;
+    const set = flowerSets.get(flowerKey(fl.k, flowerPx), () => makeFlowers(fl.k, flowerPx, flowerDpr), fl.k.id);
+    if (!set) return;
+    let s = 1, r = 0, a = 1;
+    if (fl.wiltAt >= 0) [s, r, a] = keyframes(WILT2, (fl.t - fl.wiltAt) / 0.6, easeIn);
+    else if (fl.t < 0.9) [s, r] = keyframes(GROW, fl.t / 0.9, growEase);
+    if (s <= 0 || a <= 0) return;
+    let s2 = 1, r2 = 0;
+    if (fl.nudgeAt >= 0 && fl.t - fl.nudgeAt < 0.5) [s2, r2] = keyframes(NUDGE, (fl.t - fl.nudgeAt) / 0.5, ease);
+    if (fl.doneAt >= 0 && fl.t - fl.doneAt < 0.7) [s2] = keyframes(CHEER, (fl.t - fl.doneAt) / 0.7, cheerEase);
+    let gi = 0;
+    if (fl.current && !calm.matches) {
+      const g = keyframes(GLOW, fl.t % 1.5 / 1.5, easeInOut)[0];
+      gi = 1 + Math.round((g - 0.08) / 0.3 * (GLOWS - 1));
+    }
+    const pic = set.pics[gi];
+    if (!pic) return;
+    const { F, base } = fl.at, q = F / set.px;
+    x.save();
+    x.translate(fl.at.x, base);
+    x.scale(s, s);
+    x.rotate(r * RAD2);
+    x.scale(s2, s2);
+    x.rotate(r2 * RAD2);
+    x.globalAlpha = a;
+    x.drawImage(pic, -F / 2 - set.pad * q, -pic.height * q + set.pad * q, pic.width * q, pic.height * q);
+    x.restore();
+  }
+  var slots = new PicCache();
+  var slotPx = 0;
+  var slotPic = (k) => slots.get(k.id + "|" + slotPx, () => svgImage(butterflySVG(k, true), slotPx, slotPx).then((i) => padded(i, slotPx, slotPx, 0)), k.id);
+  function wantSlots(ks, px) {
+    slotPx = Math.round(px);
+    slots.keepOnly((key2) => key2.endsWith("|" + slotPx));
+    ks.forEach(slotPic);
+  }
+  var SLOT_IN = [[0, 0, 0.4], [1, 0.55, 0.94]];
+  var SLOT_PULSE = [[0, 0.55, 0.94], [0.5, 1, 1.04], [1, 0.55, 0.94]];
+  function drawSlot(x, k, cx, cy, size, age) {
+    const pic = slotPic(k);
+    if (!pic || age < 0.6 && !calm.matches) return;
+    const [a, s] = calm.matches ? [1, 1] : age < 1 ? keyframes(SLOT_IN, (age - 0.6) / 0.4, ease) : keyframes(SLOT_PULSE, (age - 1) / 1.3 % 1, easeInOut);
+    const d = size * s;
+    x.save();
+    x.globalAlpha = a;
+    x.drawImage(pic, cx - d / 2, cy - d / 2, d, d);
+    x.restore();
+  }
+
   // src/render/scenery.ts
   var BLUR = 1.4;
   function shapePath(x, el, ox, oy) {
@@ -416,7 +680,7 @@
     const VERSION = "1.18.1";
     window.GAME_VERSION = VERSION;
     console.info("Fly Catcher v" + VERSION);
-    const BUILD = 35;
+    const BUILD = 36;
     const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
     const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);
     document.querySelectorAll(".ver").forEach((e) => {
@@ -559,8 +823,8 @@
       TOP_PAD = hud.getBoundingClientRect().height + 12;
       glass.style.setProperty("--fly", S + "px");
       stage.resize(W, H);
-      prepareArt();
       bfMeasure();
+      prepareArt();
       bfLayout();
       antMeasure();
       sizeNet(cursorNet);
@@ -570,6 +834,12 @@
       const d = stage.dpr, pool = SIZES[MODE] || [];
       wantFliers([...pool.map((sc) => ["fly", S * sc * d]), ...MODE === "bees" ? pool.map((sc) => ["bee", S * sc * d]) : []]);
       if (MODE === "bees") wantFlowers(PETALS, S * 1.45 * d, d);
+      if (MODE === "butterflies") {
+        const ks = BF_COLORS.slice(0, LV().pool);
+        wantBugs(ks, B * 1.12 * d, d);
+        wantGarden(ks, F * d, d);
+        wantSlots(ks, B * 0.9 * d);
+      }
     }
     function bounds(h = S * 0.5) {
       return { minX: h + 6, maxX: W - h - 6, minY: TOP_PAD + h * 0.4, maxY: H - h - 6 };
@@ -1227,12 +1497,13 @@
       f.flying = true;
       f.dodgeAt = f.t;
     }
-    const BF_COLORS = [
-      { id: "red", c: "#F0282D", d: "#A3121A", pat: "eyes" },
-      { id: "blue", c: "#1F6FFF", d: "#0E43B0", pat: "border" },
-      { id: "yellow", c: "#FFD60A", d: "#A88600", pat: "stripes" },
-      { id: "purple", c: "#8B2FE0", d: "#5A1596", pat: "band" }
-    ];
+    addPageDefs();
+    document.querySelectorAll('[data-ico="butterfly"]').forEach((e) => {
+      e.innerHTML = butterflySVG(BF_COLORS[1]);
+    });
+    document.querySelectorAll('[data-ico="flower"]').forEach((e) => {
+      e.innerHTML = gardenFlowerSVG(BF_COLORS[0]);
+    });
     const BF_CLOSE = [["blue", "purple"]];
     const bfClose = (a, b) => BF_CLOSE.some(([x, y]) => a.id === x && b.id === y || a.id === y && b.id === x);
     const BF_EASY = [
@@ -1256,83 +1527,8 @@
     ];
     const BF_HINT_AFTER = 4;
     const BF_AFTER_CATCH = 2;
-    const INK = "#2B2B33";
     const pick = (a) => a[Math.floor(Math.random() * a.length)];
-    const tint = (hex, a) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - a) + 255 * a).toString(16).padStart(2, "0")).join("");
-    const WING_UP = "M50 46C39 18 15 7 7 21 1 35 13 52 49 52Z";
-    const WING_LOW = "M49 53C30 54 14 66 20 82 25 94 42 86 49 62Z";
-    const MOTIF = {
-      eyes: (k) => ({
-        // peacock butterfly
-        up: `<circle cx="22" cy="27" r="11" fill="#FFE39A"/><circle cx="22" cy="27" r="7.5" fill="${INK}"/><circle cx="22" cy="27" r="4.2" fill="#6FA8FF"/><circle cx="20.4" cy="25" r="1.6" fill="#fff"/>`,
-        low: `<circle cx="31" cy="74" r="6" fill="${INK}"/><circle cx="31" cy="74" r="2.6" fill="#fff"/>`,
-        petal: `<circle cx="60" cy="17" r="7.5" fill="${INK}"/><circle cx="60" cy="17" r="3.8" fill="#6FA8FF"/>`
-      }),
-      border: (k) => ({
-        // morpho
-        up: `<path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="12"/><g fill="#fff"><circle cx="10" cy="24" r="2.2"/><circle cx="14" cy="15" r="2"/><circle cx="23" cy="11" r="1.8"/><circle cx="9" cy="34" r="2"/></g>`,
-        low: `<path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="10"/><g fill="#fff"><circle cx="22" cy="80" r="2"/><circle cx="29" cy="87" r="1.8"/></g>`,
-        petal: `<ellipse cx="60" cy="24" rx="15" ry="22" fill="none" stroke="${INK}" stroke-width="8"/><circle cx="60" cy="6.5" r="2.2" fill="#fff"/>`
-      }),
-      stripes: (k) => ({
-        // swallowtail
-        up: `<g stroke="${INK}" stroke-width="4.5" stroke-linecap="round"><path d="M44 16L30 50"/><path d="M33 10L19 47"/><path d="M22 8L8 40"/></g><path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="7"/>`,
-        low: `<path d="M44 58L30 86" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"/><path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="7"/><circle cx="35" cy="83" r="2.8" fill="#5B8CFF"/>`,
-        petal: `<g stroke="${INK}" stroke-width="3.6"><path d="M44 14H76"/><path d="M44 28H76"/></g>`
-      }),
-      band: (k) => ({
-        // purple emperor
-        up: `<path d="${WING_UP}" fill="none" stroke="${k.d}" stroke-width="9"/><path d="M42 22Q26 30 14 42" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`,
-        low: `<path d="M46 58Q36 70 28 82" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/><circle cx="26" cy="70" r="4.2" fill="#FF9E3D"/><circle cx="26" cy="70" r="2" fill="${INK}"/>`,
-        petal: `<path d="M44 24H76" stroke="#fff" stroke-width="5.5"/>`
-      }),
-      veins: (k) => ({
-        // birdwing
-        up: `<g fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"><path d="M49 48L12 20"/><path d="M49 48L20 12"/><path d="M49 48L7 32"/><path d="M49 48L32 10"/><path d="M49 48L12 44"/></g><path d="${WING_UP}" fill="none" stroke="${INK}" stroke-width="6"/>`,
-        low: `<g fill="none" stroke="${INK}" stroke-width="2.2" stroke-linecap="round"><path d="M49 56L22 68"/><path d="M49 56L22 82"/><path d="M49 56L36 88"/></g><path d="${WING_LOW}" fill="none" stroke="${INK}" stroke-width="6"/>`,
-        petal: `<g stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"><path d="M60 46V6"/><path d="M60 30L50 15"/><path d="M60 30L70 15"/></g>`
-      })
-    };
-    document.querySelector("svg defs").insertAdjacentHTML("beforeend", `
-    <clipPath id="cu" clipPathUnits="userSpaceOnUse"><path d="${WING_UP}"/></clipPath>
-    <clipPath id="cl" clipPathUnits="userSpaceOnUse"><path d="${WING_LOW}"/></clipPath>
-    <clipPath id="cp" clipPathUnits="userSpaceOnUse"><ellipse cx="60" cy="24" rx="15" ry="22"/></clipPath>` + BF_COLORS.map((k) => `<radialGradient id="g-${k.id}" gradientUnits="userSpaceOnUse" cx="50" cy="50" r="48">
-      <stop offset="0" stop-color="${tint(k.c, 0.12)}"/><stop offset="1" stop-color="${k.c}"/></radialGradient>`).join(""));
-    function butterflySVG(k, outline) {
-      let side;
-      if (outline) {
-        const w = (d) => `<path d="${d}" fill="${k.c}" fill-opacity=".25" stroke="${k.d}" stroke-width="2.6" stroke-dasharray="5 4" stroke-linejoin="round"/>`;
-        side = w(WING_UP) + w(WING_LOW);
-      } else {
-        const m = MOTIF[k.pat](k);
-        const w = (d, clip, deco) => `<path d="${d}" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/>
-        <path d="${d}" fill="url(#g-${k.id})"/><g clip-path="url(#${clip})">${deco}</g>
-        <path d="${d}" fill="none" stroke="${k.d}" stroke-width="1.6" stroke-linejoin="round"/>`;
-        side = w(WING_UP, "cu", m.up) + w(WING_LOW, "cl", m.low);
-      }
-      const body = outline ? `<ellipse cx="50" cy="55" rx="5" ry="24" fill="none" stroke="${k.d}" stroke-width="2.4" stroke-dasharray="4 4"/>` : `<path d="M47 28Q41 13 33 9M53 28Q59 13 67 9" stroke="${INK}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-         <circle cx="33" cy="9" r="2.8" fill="${INK}"/><circle cx="67" cy="9" r="2.8" fill="${INK}"/>
-         <ellipse cx="50" cy="57" rx="4.6" ry="23" fill="#3A2E2A"/><circle cx="50" cy="31" r="6.4" fill="#3A2E2A"/>
-         <circle cx="47.8" cy="29.6" r="1.5" fill="#fff"/><circle cx="52.2" cy="29.6" r="1.5" fill="#fff"/>`;
-      return `<svg viewBox="0 0 100 100" aria-hidden="true"><g class="wings"><g>${side}</g><g transform="matrix(-1 0 0 1 100 0)">${side}</g></g>${body}</svg>`;
-    }
-    function gardenFlowerSVG(k) {
-      const m = MOTIF[k.pat](k);
-      const petals = [0, 60, 120, 180, 240, 300].map((a) => `<g transform="rotate(${a} 60 50)"><ellipse cx="60" cy="24" rx="15" ry="22" fill="${tint(k.c, 0.12)}"/>
-       <g clip-path="url(#cp)">${m.petal}</g>
-       <ellipse cx="60" cy="24" rx="15" ry="22" fill="none" stroke="${k.d}" stroke-width="2.4"/></g>`).join("");
-      return `<svg viewBox="0 0 120 140" aria-hidden="true">
-      <path d="M60 70Q56 105 60 138" stroke="#3F9B53" stroke-width="7" fill="none" stroke-linecap="round"/>
-      <path d="M60 112Q80 96 95 103Q82 120 60 117Z" fill="#5FBF5A"/><path d="M60 100Q40 86 26 92Q38 108 60 106Z" fill="#5FBF5A"/>
-      <circle class="glow" cx="60" cy="50" r="56" fill="${k.c}"/>${petals}
-      <circle cx="60" cy="50" r="14" fill="#FFF3C4" stroke="${k.d}" stroke-width="2"/></svg>`;
-    }
-    document.querySelectorAll('[data-ico="butterfly"]').forEach((e) => {
-      e.innerHTML = butterflySVG(BF_COLORS[1]);
-    });
-    document.querySelectorAll('[data-ico="flower"]').forEach((e) => {
-      e.innerHTML = gardenFlowerSVG(BF_COLORS[0]);
-    });
+    let garden = [];
     let bugs = [], bfCarries = [], bfOnClear = null, bfSpawnT = 0, bfFlowers = [], bfPartN = 1, bfSet = null, bfSeen = [], bfHintT = 0, B = 80, F = 140;
     const bfSubsets = (a, k) => k === 0 ? [[]] : a.flatMap((x, i) => bfSubsets(a.slice(i + 1), k - 1).map((r) => [x, ...r]));
     function bfPickSet() {
@@ -1372,10 +1568,7 @@
       const fh = F * 140 / 120, rtl = document.documentElement.dir === "rtl", two = bfPartN > 1;
       for (const fl of bfFlowers) {
         const h = bfHead(fl);
-        fl.el.style.width = F + "px";
-        fl.el.style.height = fh + "px";
-        fl.el.style.transform = `translate(${h.x - F / 2}px,${H - fh * 0.98}px)`;
-        fl.el.style.setProperty("--at", fl.el.style.transform);
+        fl.at = { x: h.x, base: H - fh * 0.98 + fh, F };
         fl.bugs.forEach((b, j) => {
           if (b.state === "rest") {
             const p = bfSlot(fl, j);
@@ -1383,11 +1576,7 @@
             b.y = p.y;
           }
         });
-        if (fl.slot) {
-          const p = bfSlot(fl, fl.bugs.length), s = B * 0.9;
-          fl.slot.style.width = fl.slot.style.height = s + "px";
-          fl.slot.style.transform = `translate(${p.x - s / 2}px,${p.y - s / 2}px)`;
-        }
+        fl.slotAt = fl.slotOn ? bfSlot(fl, fl.bugs.length) : null;
         const side = two ? fl.i ? 1 : -1 : rtl ? -1 : 1, x = h.x + side * F * 0.56;
         fl.count.style.setProperty("--m", B * 0.42 + "px");
         fl.count.style.transform = `translate(${x}px,${h.y}px) translate(${side < 0 ? "-100%" : "0"},-50%)`;
@@ -1401,20 +1590,30 @@
       if (Math.random() < 0.5) ks.reverse();
       bfPartN = ks.length;
       bfFlowers = ks.map((k, i) => {
-        const el = document.createElement("div");
-        el.className = "gflower current";
-        el.innerHTML = `<div class="inner">${gardenFlowerSVG(k)}</div>`;
-        const slot = document.createElement("div");
-        slot.className = "bslot";
-        slot.innerHTML = butterflySVG(k, true);
         const count = document.createElement("div");
         count.className = "bcount";
         count.style.setProperty("--k", k.d);
         count.innerHTML = `<b class="n" dir="ltr">0/${LV().per}</b>` + Array.from({ length: LV().per }, () => `<i>${butterflySVG(k, true)}</i>`).join("");
-        flora.append(el, slot, count);
-        return { k, i, el, slot, count, bugs: [], per: LV().per };
+        flora.append(count);
+        return {
+          k,
+          i,
+          count,
+          bugs: [],
+          per: LV().per,
+          t: 0,
+          at: null,
+          current: true,
+          nudgeAt: -1,
+          doneAt: -1,
+          wiltAt: -1,
+          slotOn: true,
+          slotAt: null
+        };
       });
+      garden.push(...bfFlowers);
       bfMeasure();
+      prepareArt();
       bfLayout();
       bfHintT = 0;
       bfSpawnT = 0.7;
@@ -1423,18 +1622,20 @@
     }
     const BF_SIZES = [0.9, 1, 1.12];
     function bfSpawn(k) {
-      const el = document.createElement("div"), size = B * pick(BF_SIZES);
-      el.className = "bfly";
-      el.style.setProperty("--s", size + "px");
-      el.style.setProperty("--c", k.c);
-      el.innerHTML = `<div class="rot">${butterflySVG(k)}</div>`;
-      el.querySelector(".wings").style.animationDelay = -rand(0, 1) + "s";
-      layer.appendChild(el);
+      const size = B * pick(BF_SIZES);
       const band = bfBand(), left = Math.random() < 0.5;
       const b = {
-        el,
-        rot: el.firstElementChild,
         k,
+        size,
+        sz0: size,
+        szAt: -99,
+        szDur: 0.8,
+        ph: Math.random(),
+        flee: false,
+        rest: false,
+        carried: false,
+        hint: false,
+        hintAt: 0,
         x: left ? -B * 0.3 : W + B * 0.3,
         y: rand(band.minY, band.maxY),
         heading: left ? rand(-0.4, 0.4) : Math.PI + rand(-0.4, 0.4),
@@ -1447,7 +1648,6 @@
         deg: 0,
         tw: null,
         spdK: rand(0.85, 1.15),
-        size,
         bump: 0,
         voice: sfx.voice("butterfly"),
         vl: -1,
@@ -1464,8 +1664,9 @@
       b.leaving = true;
       b.entered = false;
       b.heading = b.target = b.x < W / 2 ? Math.PI : 0;
-      b.el.classList.remove("rest", "hint");
-      b.el.classList.add("flee");
+      b.rest = false;
+      b.hint = false;
+      b.flee = true;
     }
     function bfRefill() {
       if (gameOver || !running || !bfFlowers.length) return;
@@ -1510,10 +1711,11 @@
       bfCarries.slice().forEach((c) => bfCarryStep(c, dt));
       for (const b of bugs) {
         b.t += dt;
+        flap(b, dt);
         if (b.state === "fly" || b.state === "flee") {
           if (b.state === "flee" && (b.fleeT -= dt) <= 0) {
             b.state = "fly";
-            b.el.classList.remove("flee");
+            b.flee = false;
           }
           if (b.state === "fly" && (b.turn -= dt) <= 0) {
             b.target = Math.atan2(rand(band.minY, band.maxY) - b.y, rand(band.minX, band.maxX) - b.x);
@@ -1545,15 +1747,10 @@
         } else if (b.state === "rest") {
           b.deg = Math.sin(b.t * 1.3 + b.wob) * 4;
         }
-        b.el.style.transform = `translate3d(${b.x - b.size / 2}px,${b.y - b.size / 2}px,0)`;
-        b.rot.style.transform = `rotate(${b.deg}deg)`;
       }
       bfCollide(dt);
       if (bugs.some((b) => b.gone)) bugs = bugs.filter((b) => {
-        if (b.gone) {
-          b.el.remove();
-          if (b.voice) b.voice.stop();
-        }
+        if (b.gone && b.voice) b.voice.stop();
         return !b.gone;
       });
       if (bfOnClear && !bugs.length) {
@@ -1565,7 +1762,11 @@
         bfHintT += dt;
         if (bfHintT > BF_HINT_AFTER) {
           const ks = bfOpen().map((fl) => fl.k);
-          bfFree().forEach((b) => b.el.classList.toggle("hint", ks.includes(b.k)));
+          bfFree().forEach((b) => {
+            const on = ks.includes(b.k);
+            if (on && !b.hint) b.hintAt = b.t;
+            b.hint = on;
+          });
         }
       }
     }
@@ -1620,10 +1821,10 @@
         const j = fl.bugs.length;
         fl.bugs.push(b);
         b.state = "toFlower";
-        b.el.classList.remove("hint");
-        b.el.classList.add("flee", "carried");
-        b.size = small;
-        b.el.style.setProperty("--s", small + "px");
+        b.hint = false;
+        b.flee = true;
+        b.carried = true;
+        bugSize(b, small);
         b.tw = c;
         c.members.push({ b, j, x0: b.x, y0: b.y, off: BAG_SPOTS[i % BAG_SPOTS.length] });
       });
@@ -1631,11 +1832,13 @@
       bfCarryStep(c, 0);
       bfSpawnT = Math.max(bfSpawnT, BF_AFTER_CATCH);
       sfx.bfCatch();
-      bugs.forEach((x) => x.el.classList.remove("hint"));
+      bugs.forEach((x) => {
+        x.hint = false;
+      });
       bfHintT = 0;
       if (fl.bugs.length >= fl.per) {
-        if (fl.slot) fl.slot.remove();
-        fl.slot = null;
+        fl.slotOn = false;
+        fl.slotAt = null;
       } else bfLayout();
       bfRefill();
     }
@@ -1663,9 +1866,8 @@
           c.out = true;
           c.net.animate([{ rotate: "0deg", opacity: 1 }, { rotate: "30deg", opacity: 0 }], { duration: RELEASE * 1e3, easing: "ease-in", fill: "forwards" });
           c.members.forEach((m) => {
-            m.b.el.classList.remove("flee");
-            m.b.size = B * 0.9;
-            m.b.el.style.setProperty("--s", m.b.size + "px");
+            m.b.flee = false;
+            bugSize(m.b, B * 0.9);
           });
         }
       }
@@ -1695,8 +1897,8 @@
     }
     function bfLand(b, j) {
       b.state = "rest";
-      b.el.classList.remove("carried");
-      b.el.classList.add("rest");
+      b.carried = false;
+      b.rest = true;
       const fl = b.tw.fl, mini = fl.count.querySelectorAll("i")[j], n = fl.count.querySelector(".n");
       if (mini) {
         mini.innerHTML = butterflySVG(fl.k);
@@ -1725,7 +1927,7 @@
       }, ms);
     }
     function bfWilt(fl, then) {
-      fl.el.classList.add("wilt");
+      fl.wiltAt = fl.t;
       fl.count.classList.add("gone");
       fl.bugs.forEach((b) => {
         b.state = "flee";
@@ -1733,19 +1935,19 @@
         b.leaving = true;
         b.entered = false;
         b.heading = b.target = -Math.PI / 2 + rand(-0.9, 0.9);
-        b.el.classList.remove("rest");
-        b.el.classList.add("flee");
+        b.rest = false;
+        b.flee = true;
       });
       bfLater(() => {
-        fl.el.remove();
+        garden = garden.filter((x) => x !== fl);
         fl.count.remove();
         if (then) then();
       }, 650);
     }
     function bfFlowerFull(fl) {
       fl.done = true;
-      fl.el.classList.remove("current");
-      fl.el.classList.add("done");
+      fl.current = false;
+      fl.doneAt = fl.t;
       const h = bfHead(fl);
       burst(h.x, h.y, F * 0.6);
       sfx.bfDone();
@@ -1789,16 +1991,13 @@
     function bfShoo(b, px, py) {
       b.state = "flee";
       b.fleeT = 0.7;
-      b.el.classList.add("flee");
+      b.flee = true;
       b.heading = b.target = Math.atan2(b.y - py, b.x - px) + rand(-0.3, 0.3);
     }
     function bfWrong(b, px, py) {
       bfShoo(b, px, py);
       bfFlowers.forEach((fl) => {
-        const e = fl.el;
-        e.classList.remove("nudge");
-        void e.offsetWidth;
-        e.classList.add("nudge");
+        fl.nudgeAt = fl.t;
       });
       beeAlert(b.x, b.y, "wrongBf");
       miss.sayNow();
@@ -1826,7 +2025,6 @@
     }
     function bfClear() {
       bugs.forEach((b) => {
-        b.el.remove();
         if (b.voice) b.voice.stop();
         if (b.tw && b.tw.net) b.tw.net.remove();
       });
@@ -1834,6 +2032,7 @@
       bfCarries = [];
       bfOnClear = null;
       bfFlowers = [];
+      garden = [];
       bfSet = null;
       bfSeen = [];
     }
@@ -2971,7 +3170,7 @@
       const arch = e.target.closest(".narch");
       if (arch) {
         const open = arch.getAttribute("aria-expanded") !== "true", old = $("newsOld"), card = arch.closest(".card");
-        const glide = (top) => card.scrollTo({ top, behavior: calm.matches ? "auto" : "smooth" });
+        const glide = (top) => card.scrollTo({ top, behavior: calm2.matches ? "auto" : "smooth" });
         const bar = card.nextElementSibling && card.nextElementSibling.classList.contains("kscroll") ? card.nextElementSibling : null;
         arch.setAttribute("aria-expanded", String(open));
         sfx.init();
@@ -2986,7 +3185,7 @@
           glide(card.scrollTop + arch.getBoundingClientRect().top - card.getBoundingClientRect().top - 12);
           return;
         }
-        if (calm.matches) {
+        if (calm2.matches) {
           old.hidden = true;
           card.scrollTop = 0;
           measure();
@@ -3282,7 +3481,7 @@
       return tot ? hit / tot : 0;
     }
     function moveClouds(dt) {
-      cloudT += dt;
+      if (!calm2.matches) cloudT += dt;
       cloudEls.forEach((c, i) => {
         const w = cloudW[i], pic = c.firstElementChild;
         cloudX[i] = -1.1 * w + (cloudT + CLOUD_START[i]) * CLOUD_PX_S[i] % (innerWidth + w * 1.2);
@@ -3318,9 +3517,12 @@
     addEventListener("resize", () => bake());
     watchColours(() => bake(1300));
     function drawStage() {
-      if (!stage.begin(flies.length > 0 || beeFlowers.length > 0)) return;
+      if (!stage.begin(flies.length > 0 || beeFlowers.length > 0 || bugs.length > 0 || garden.length > 0)) return;
       const x = stage.x, d = stage.dpr;
       for (const fl of beeFlowers) drawBeeFlower(x, fl);
+      for (const fl of garden) if (!gardenGone(fl)) drawGarden(x, fl);
+      for (const fl of garden) if (fl.slotAt) drawSlot(x, fl.k, fl.slotAt.x, fl.slotAt.y, B * 0.9, fl.t);
+      for (const b of bugs) drawBug(x, b, sha);
       for (const f of flies) if (!f.top) drawFlier(x, f, S * f.sc, sha, d);
       for (const f of flies) if (f.top) drawFlier(x, f, S * f.sc, sha, d);
     }
@@ -3356,6 +3558,7 @@
       if (!paused && !document.hidden) {
         moveClouds(dt);
         for (const fl of beeFlowers) fl.t += dt;
+        for (const fl of garden) fl.t += dt;
       }
       if (beeFlowers.some(flowerGone)) beeFlowers = beeFlowers.filter((fl) => !flowerGone(fl));
       if (t - lastLight > 100) {
@@ -3377,7 +3580,7 @@
       }
       for (const b of bugs) {
         if (!b.voice) continue;
-        const fast = b.el.classList.contains("flee"), still = b.state === "rest";
+        const fast = b.flee, still = b.state === "rest";
         const lv = paused || still ? 0 : BF_FLUTTER * Math.sqrt(b.size / B) * (b.state === "toFlower" ? 0.7 : 1);
         const p = clamp(b.x / W * 2 - 1, -1, 1) * PAN_MAX, r = fast ? 7 : 2.9;
         if (Math.abs(lv - b.vl) > 5e-4 || Math.abs(p - b.vp) > 0.02 || r !== b.vr) {
@@ -3429,7 +3632,7 @@
         bar.style.height = card.offsetHeight - inset * 2 + "px";
         bar.style.left = card.offsetLeft + (rtl ? edge : card.offsetWidth - bar.offsetWidth - edge) + "px";
       };
-      const nudge = (dir) => card.scrollBy({ top: dir * card.clientHeight * 0.45, behavior: calm.matches ? "auto" : "smooth" });
+      const nudge = (dir) => card.scrollBy({ top: dir * card.clientHeight * 0.45, behavior: calm2.matches ? "auto" : "smooth" });
       up.addEventListener("click", () => nudge(-1));
       down.addEventListener("click", () => nudge(1));
       track.addEventListener("pointerdown", (e) => {
@@ -3481,7 +3684,7 @@
       ["split-cards", "(orientation:landscape) and (max-height:820px)"],
       ["hud-stack", "(max-aspect-ratio:6/5),(max-width:540px)"]
     ];
-    const calm = matchMedia("(prefers-reduced-motion: reduce)");
+    const calm2 = matchMedia("(prefers-reduced-motion: reduce)");
     LAYOUTS.forEach(([cls, query]) => {
       const mq = matchMedia(query);
       const apply = () => {
@@ -3490,7 +3693,7 @@
       };
       apply();
       mq.addEventListener("change", () => {
-        if (document.startViewTransition && !calm.matches && !document.hidden) document.startViewTransition(apply).ready.catch(() => {
+        if (document.startViewTransition && !calm2.matches && !document.hidden) document.startViewTransition(apply).ready.catch(() => {
         });
         else apply();
       });

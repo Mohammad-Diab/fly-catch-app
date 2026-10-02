@@ -25,6 +25,8 @@ export function cubicBezier(x1: number, y1: number, x2: number, y2: number): Eas
 export const linear: Ease = x => x;
 export const easeIn = cubicBezier(.42, 0, 1, 1);
 export const easeOut = cubicBezier(0, 0, .58, 1);
+export const easeInOut = cubicBezier(.42, 0, .58, 1);
+export const ease = cubicBezier(.25, .1, .25, 1);
 
 // CSS-style keyframes: rows of [offset, ...values], each segment eased on its own like a CSS animation
 export type Keyframes = readonly (readonly number[])[];

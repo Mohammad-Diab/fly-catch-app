@@ -61,3 +61,38 @@ export function blurred(src: HTMLCanvasElement, px: number): HTMLCanvasElement {
   x.drawImage(src, 0, 0);
   return c;
 }
+
+// Pictures made in the background and kept while wanted. get() returns undefined until the picture is ready,
+// or the last ready one of its group (the same thing at an older size), drawn scaled meanwhile
+export class PicCache<T> {
+  private ready = new Map<string, T>();
+  private making = new Set<string>();
+  private near = new Map<string, T>();
+  private gen = 0;
+
+  get(key: string, make: () => Promise<T>, group = ""): T | undefined {
+    const r = this.ready.get(key);
+    if (r) return r;
+    if (!this.making.has(key)) {
+      this.making.add(key);
+      const g = this.gen;
+      make().then(v => {
+        this.making.delete(key);
+        if (g !== this.gen) return;
+        this.ready.set(key, v);
+        this.near.set(group, v);
+      }, () => this.making.delete(key));
+    }
+    return this.near.get(group);
+  }
+
+  // Drops pictures that are no longer wanted, e.g. old sizes after a resize; the near ones stay until replaced
+  keepOnly(wanted: (key: string) => boolean) {
+    for (const k of [...this.ready.keys()]) if (!wanted(k)) this.ready.delete(k);
+  }
+
+  clear() {
+    this.ready.clear(); this.making.clear(); this.near.clear();
+    this.gen++;
+  }
+}
