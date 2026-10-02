@@ -1,4 +1,4 @@
-// Offline support; keep VERSION in sync with js/game.js, or installed apps stay on the old version
+// Offline support; keep VERSION in sync with src/main.ts, or installed apps stay on the old version
 const VERSION = "1.18.1";
 const CACHE = "fly-catch-" + VERSION;
 

@@ -164,6 +164,19 @@ if node:
         if r.returncode:
             problems.append(f"{path}: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'syntax error'}")
     check("JavaScript has no syntax errors", problems)
+
+    # js/game.js is committed, so it must be the build of src/ as it is now
+    esb = os.path.join("node_modules", "esbuild", "bin", "esbuild")
+    if os.path.exists(esb):
+        out = os.path.join("node_modules", ".check-game.js")
+        args = json.loads(read("package.json"))["scripts"]["build"].split()[1:]
+        args = [f"--outfile={out}" if a.startswith("--outfile=") else a for a in args]
+        r = subprocess.run(node + [esb] + args, capture_output=True, text=True)
+        built = read(out) if r.returncode == 0 else None
+        check("js/game.js is built from src/ (npm run build)",
+              [r.stderr.strip() or "build failed"] if built is None else [] if built == game else ["js/game.js is out of date: run npm run build"])
+    else:
+        print("  skip  js/game.js matches src/ (run npm install to check it)")
 else:
     print("  skip  JavaScript syntax (install Node.js to check it)")
 
