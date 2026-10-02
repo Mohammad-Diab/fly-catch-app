@@ -12,11 +12,11 @@ import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from
 import { moveMenu, resetMenu } from "./menu/motion";
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
-  const VERSION = "1.18.1";
+  const VERSION = "1.18.2";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 42;
+  const BUILD = 43;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });

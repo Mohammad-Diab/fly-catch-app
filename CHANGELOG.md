@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.18.2 · 2026-10-02
+
+- Uses less battery on fast screens (90, 120 or 144 Hz): the game runs at 60 frames a second everywhere
+
 ## 1.18.1 · 2026-10-01
 
 - Runs smoother and uses less battery
