@@ -1,5 +1,5 @@
 import { cubicBezier, easeIn, easeOut, keyframes } from "../render/ease";
-import { padded, silhouette, svgImage, withShadow } from "../render/sprites";
+import { type Pic, padded, silhouette, svgImage, toPic, withShadow } from "../render/sprites";
 import { BEE_SVG, FLY_SVG, flowerSVG } from "./art";
 
 // How flies, bees and the bees' flowers are drawn on the stage canvas. Timings copy the CSS animations they replace
@@ -29,7 +29,7 @@ const PHASES = 5;   // wing positions over half a beat
 const key = (...a: (string | number)[]) => a.join("|");
 
 // ---------- Flies and bees ----------
-interface Frame { img: HTMLCanvasElement; sh: HTMLCanvasElement }
+interface Frame { img: Pic; sh: Pic }
 interface FrameSet { px: number; still: Frame; flap: Frame[] }
 
 const flierSets = new Map<string, FrameSet>(), making = new Set<string>(), latest = new Map<Kind, FrameSet>();
@@ -46,7 +46,7 @@ async function makeFliers(kind: Kind, px: number): Promise<FrameSet> {
   const pad = Math.ceil(px * PAD);
   const frame = async (ph: number | null): Promise<Frame> => {
     const img = padded(await svgImage(wingsAt(kind, ph), px, px), px, px, pad);
-    return { img, sh: silhouette(img, px * .06) };
+    return { img: await toPic(img), sh: await toPic(silhouette(img, px * .06)) };
   };
   const [still, ...flap] = await Promise.all([frame(null), ...Array.from({ length: PHASES }, (_, i) => frame(i / (PHASES - 1)))]);
   return { px, still, flap };
@@ -143,7 +143,7 @@ export function drawFlier(x: CanvasRenderingContext2D, f: FlierLook, Z: number, 
 }
 
 // ---------- The bee's flower ----------
-const flowerPics = new Map<string, { img: HTMLCanvasElement; pad: number; px: number }>(), flowerMaking = new Set<string>();
+const flowerPics = new Map<string, { img: Pic; pad: number; px: number }>(), flowerMaking = new Set<string>();
 let wantedFlowerPx = 0, devRatio = 1;
 
 function startFlower(c: string, px: number) {
@@ -151,12 +151,12 @@ function startFlower(c: string, px: number) {
   if (flowerPics.has(k) || flowerMaking.has(k)) return;
   flowerMaking.add(k);
   const pad = Math.ceil(14 * devRatio);
-  svgImage(flowerSVG(c), px, Math.round(px * 1.2)).then(img => {
-    flowerMaking.delete(k);
-    if (px !== wantedFlowerPx) return;
-    const pic = withShadow(padded(img, px, Math.round(px * 1.2), pad), 0, 6 * devRatio, 5 * devRatio, "rgba(0,0,0,.18)");
-    flowerPics.set(k, { img: pic, pad, px });
-  }, () => flowerMaking.delete(k));
+  svgImage(flowerSVG(c), px, Math.round(px * 1.2))
+    .then(img => toPic(withShadow(padded(img, px, Math.round(px * 1.2), pad), 0, 6 * devRatio, 5 * devRatio, "rgba(0,0,0,.18)")))
+    .then(pic => {
+      flowerMaking.delete(k);
+      if (px === wantedFlowerPx) flowerPics.set(k, { img: pic, pad, px });
+    }, () => flowerMaking.delete(k));
 }
 // px: flower width in device pixels; the shadow is a fixed 6px down, 5px soft, like the CSS one
 export function wantFlowers(colors: readonly string[], px: number, dpr: number) {

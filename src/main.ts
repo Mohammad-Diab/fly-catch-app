@@ -2,6 +2,8 @@
 import { BEE_SVG, FLY_SVG, PETALS, flowerSVG } from "./flies/art";
 import { drawBeeFlower, drawFlier, flowerGone, wantFliers, wantFlowers } from "./flies/look";
 import { BF_COLORS, addPageDefs, butterflySVG, gardenFlowerSVG } from "./butterflies/art";
+import { ANT_SVG, FOODS, HILL_SVG, PEEK_SVG } from "./ants/art";
+import { drawAnt, drawFood, wantAnts, wantFoods } from "./ants/look";
 import { bugSize, drawBug, drawGarden, drawSlot, flap, gardenGone, wantBugs, wantGarden, wantSlots } from "./butterflies/look";
 import { bakeScenery, watchColours } from "./render/scenery";
 import { Stage } from "./render/stage";
@@ -11,7 +13,7 @@ import { Stage } from "./render/stage";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 36;
+  const BUILD = 37;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
@@ -161,7 +163,7 @@ import { Stage } from "./render/stage";
     TOP_PAD = hud.getBoundingClientRect().height + 12;   // includes CSS zoom on large screens
     glass.style.setProperty("--fly", S + "px");
     stage.resize(W, H);
-    bfMeasure(); prepareArt(); bfLayout(); antMeasure();
+    bfMeasure(); antMeasure(); prepareArt(); bfLayout();
     sizeNet(cursorNet);
     fitCards();
   }
@@ -174,6 +176,7 @@ import { Stage } from "./render/stage";
       const ks = BF_COLORS.slice(0, LV().pool);
       wantBugs(ks, B * 1.12 * d, d); wantGarden(ks, F * d, d); wantSlots(ks, B * .9 * d);
     }
+    if (MODE === "ants") { wantAnts(A * d, d); wantFoods(A * .5 * d, d, LV().foods); }
   }
   function bounds(h = S * 0.5) {
     return { minX: h + 6, maxX: W - h - 6, minY: TOP_PAD + h * 0.4, maxY: H - h - 6 };
@@ -1018,56 +1021,6 @@ import { Stage } from "./render/stage";
     { speed: 180, goal: 6, foods: 5, flies: 2 },
   ];
   const ANT_MAX_FOOD = 2, ANT_PEEK_AFTER = 6, ANT_HUNGRY_AFTER = 12;
-  const ANT_SVG = `<svg viewBox="0 0 120 80" aria-hidden="true">
-  <g stroke="#8A3A22" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".65">
-    <path class="tb" style="transform-origin:73px 47px" d="M73 47L88 39L100 69"/>
-    <path class="ta" style="transform-origin:68px 48px" d="M68 48L76 39L81 70"/>
-    <path class="tb" style="transform-origin:64px 47px" d="M64 47L56 37L50 69"/></g>
-  <g stroke="#5A2414" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path class="ta" style="transform-origin:71px 48px" d="M71 48L83 37L92 71"/>
-    <path class="tb" style="transform-origin:67px 49px" d="M67 49L70 38L73 72"/>
-    <path class="ta" style="transform-origin:63px 48px" d="M63 48L50 35L39 70"/></g>
-  <ellipse cx="32" cy="44" rx="23" ry="18" fill="#C9542F" stroke="#7A2C18" stroke-width="2.5"/>
-  <ellipse cx="25" cy="37" rx="9" ry="5" fill="#fff" opacity=".28"/>
-  <circle cx="56" cy="45" r="6" fill="#B84A29" stroke="#7A2C18" stroke-width="2.2"/>
-  <ellipse cx="67" cy="43" rx="11" ry="9" fill="#C9542F" stroke="#7A2C18" stroke-width="2.5"/>
-  <g class="head">
-    <g class="antn" style="transform-origin:89px 22px"><path d="M86 22Q82 8 72 5M93 21Q100 7 111 8" stroke="#5A2414" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <circle cx="72" cy="5" r="3.4" fill="#5A2414"/><circle cx="111" cy="8" r="3.4" fill="#5A2414"/></g>
-    <circle cx="90" cy="35" r="17" fill="#D45E35" stroke="#7A2C18" stroke-width="2.5"/>
-    <circle cx="96" cy="31" r="6.5" fill="#fff"/><circle cx="98" cy="31.5" r="3.6" fill="#2B1A14"/><circle cx="99.3" cy="30" r="1.3" fill="#fff"/>
-    <circle cx="99" cy="42" r="3.6" fill="#FF8FA3" opacity=".6"/>
-    <path d="M91 43Q96 47 101 44" stroke="#5A2414" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
-</svg>`;
-  const PEEK_SVG = `<svg viewBox="0 0 100 130" aria-hidden="true">
-  <ellipse cx="50" cy="112" rx="19" ry="16" fill="#C9542F" stroke="#7A2C18" stroke-width="2.5"/>
-  <g class="antn" style="transform-origin:50px 40px"><path d="M40 34Q32 14 20 10M60 34Q68 14 80 10" stroke="#5A2414" stroke-width="3.2" fill="none" stroke-linecap="round"/>
-    <circle cx="20" cy="10" r="4" fill="#5A2414"/><circle cx="80" cy="10" r="4" fill="#5A2414"/></g>
-  <circle cx="50" cy="62" r="30" fill="#D45E35" stroke="#7A2C18" stroke-width="2.5"/>
-  <circle cx="39" cy="56" r="9" fill="#fff"/><circle cx="61" cy="56" r="9" fill="#fff"/>
-  <g class="eyes"><circle cx="39" cy="57" r="4.6" fill="#2B1A14"/><circle cx="61" cy="57" r="4.6" fill="#2B1A14"/>
-    <circle cx="40.6" cy="55.2" r="1.6" fill="#fff"/><circle cx="62.6" cy="55.2" r="1.6" fill="#fff"/></g>
-  <circle cx="31" cy="70" r="4.5" fill="#FF8FA3" opacity=".6"/><circle cx="69" cy="70" r="4.5" fill="#FF8FA3" opacity=".6"/>
-  <path d="M42 74Q50 80 58 74" stroke="#5A2414" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-</svg>`;
-  const HILL_SVG = `<svg viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
-  <g fill="#5FA84A"><path d="M14 66Q12 48 6 40Q16 50 18 64Z"/><path d="M20 66Q22 46 30 36Q24 50 25 66Z"/><path d="M26 68Q32 54 40 50Q32 58 31 68Z"/>
-    <path d="M186 64Q190 48 196 42Q186 52 182 64Z"/><path d="M178 66Q176 48 168 40Q174 52 173 66Z"/></g>
-  <path d="M34 44Q40 26 70 24Q86 16 104 22Q126 16 142 26Q166 28 168 44Q170 60 140 64Q118 70 98 66Q76 70 58 64Q32 60 34 44Z" fill="#C08049"/>
-  <path d="M46 44Q52 32 76 31Q100 26 124 31Q150 34 154 44Q150 54 124 57Q100 61 76 57Q50 54 46 44Z" fill="#A86C3B"/>
-  <ellipse cx="100" cy="40" rx="34" ry="13" fill="#6B4224"/>
-  <ellipse cx="100" cy="38" rx="26" ry="9" fill="#2A180C"/>
-  <g fill="#D9A56E"><circle cx="44" cy="34" r="2.4"/><circle cx="60" cy="22" r="2"/><circle cx="150" cy="24" r="2.2"/><circle cx="164" cy="36" r="2"/><circle cx="52" cy="58" r="2.2"/><circle cx="148" cy="58" r="2.4"/><circle cx="96" cy="64" r="2"/><circle cx="122" cy="20" r="1.8"/></g>
-  <g fill="#8E5A30"><circle cx="70" cy="30" r="1.8"/><circle cx="132" cy="32" r="2"/><circle cx="66" cy="52" r="1.8"/><circle cx="136" cy="52" r="1.8"/><circle cx="84" cy="24" r="1.6"/><circle cx="116" cy="60" r="1.6"/></g>
-  <ellipse cx="160" cy="70" rx="13" ry="8" fill="#A9A39A"/><ellipse cx="157" cy="67" rx="5" ry="2.5" fill="#fff" opacity=".35"/>
-</svg>`;
-  const FOODS = [
-    `<svg viewBox="0 0 60 60" aria-hidden="true"><g stroke="#AEB8C4" stroke-width="2" stroke-linejoin="round"><path d="M30 13L51 23L30 33L9 23Z" fill="#fff"/><path d="M9 23L30 33L30 53L9 43Z" fill="#EEF2F6"/><path d="M51 23L30 33L30 53L51 43Z" fill="#DCE3EB"/></g><g fill="#C9D3DE"><circle cx="24" cy="21" r="1.3"/><circle cx="34" cy="25" r="1.3"/><circle cx="30" cy="18" r="1.1"/><circle cx="16" cy="34" r="1.2"/><circle cx="21" cy="42" r="1.2"/><circle cx="39" cy="38" r="1.2"/><circle cx="44" cy="31" r="1.2"/></g></svg>`,
-    `<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M12 51V27C5 25 5 12 16 10C22 3 38 3 44 10C55 12 55 25 48 27V51Z" fill="#C98A4B" stroke="#9C6331" stroke-width="2" stroke-linejoin="round"/><path d="M16 47V24C11 22 11 15 18 14C23 8 37 8 42 14C49 15 49 22 44 24V47Z" fill="#FFF4DC"/><g fill="#EBD9B0"><ellipse cx="24" cy="24" rx="2" ry="1.4"/><ellipse cx="35" cy="20" rx="1.8" ry="1.2"/><ellipse cx="30" cy="32" rx="2" ry="1.4"/><ellipse cx="22" cy="39" rx="1.6" ry="1.1"/><ellipse cx="38" cy="38" rx="1.8" ry="1.2"/></g></svg>`,
-    `<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M30 54Q10 40 12 25Q14 15 30 17Q46 15 48 25Q50 40 30 54Z" fill="#F0384A" stroke="#B3162A" stroke-width="2.5"/><g fill="#FFE08A"><circle cx="22" cy="28" r="1.6"/><circle cx="32" cy="26" r="1.6"/><circle cx="40" cy="31" r="1.6"/><circle cx="26" cy="38" r="1.6"/><circle cx="35" cy="40" r="1.6"/></g><path d="M18 19L30 10L42 19L34 18L30 14L26 18Z" fill="#3FAE4A"/></svg>`,
-    `<svg viewBox="0 0 60 60" aria-hidden="true" style="--bx:90%;--by:50%;--br:22%"><path d="M7 30A23 23 0 0 0 53 30Z" fill="#FFF3CF" stroke="#E3383A" stroke-width="4" stroke-linejoin="round"/><g fill="#5A3418"><ellipse cx="25" cy="38" rx="2" ry="3"/><ellipse cx="35" cy="38" rx="2" ry="3"/></g></svg>`,
-    `<svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="32" r="20" fill="#D9A15B" stroke="#A86F2E" stroke-width="2.5"/><g fill="#5A3418"><circle cx="22" cy="26" r="3"/><circle cx="36" cy="24" r="2.6"/><circle cx="38" cy="38" r="3"/><circle cx="24" cy="40" r="2.6"/></g></svg>`,
-  ];
   document.querySelectorAll('[data-ico="ant"]').forEach(e => { e.innerHTML = ANT_SVG; });
 
   let ants = [], foods = [], A = 90, antHill = { x: 0, y: 0 }, antG = { top: 0, bot: 0 }, antHillEl = null, antGroundEl = null;
@@ -1086,7 +1039,6 @@ import { Stage } from "./render/stage";
     }
     if (antGroundEl) antGroundEl.style.top = antG.top - A * .55 + "px";
     if (antPeekEls) antPlacePeek();
-    ants.forEach(antDraw); foods.forEach(antDrawFood);
   }
   function antStart() {
     antGroundEl = document.createElement("div"); antGroundEl.className = "antground";
@@ -1106,7 +1058,7 @@ import { Stage } from "./render/stage";
     }
   }
   function antClear() {
-    ants.forEach(a => a.el.remove()); foods.forEach(f => f.el.remove()); antHidePeek();
+    antHidePeek();
     ants = []; foods = []; antQueue = []; antClock = antNextOut = 0; antHillEl = antGroundEl = null; antIdle = 0; antPeeked = false;
   }
   function antTap(px, py) {
@@ -1117,16 +1069,11 @@ import { Stage } from "./render/stage";
     let x = clamp(px, A * .5, W - A * .5);
     const y = clamp(py + A * 1.2, antG.top, antG.bot), dx = x - antHill.x, dy = (y - antHill.y) / .55;
     if (Math.hypot(dx, dy) < antHill.w * .45) x = antHill.x + (dx < 0 ? -1 : 1) * antHill.w * .55;
-    const f = { x, y, el: document.createElement("div"), ant: null, carried: false };
-    f.el.className = "food"; f.el.innerHTML = `<div class="in">${pick(FOODS.slice(0, LV().foods))}</div>`;
-    flora.appendChild(f.el); antDrawFood(f);
-    foods.push(f);
     const k = antScale(y), fall = Math.max(0, (y - py) / k - A * .25);
-    f.el.firstElementChild.animate([{ transform: `translate(${(px - x) / k}px,${-fall}px)` }, { transform: "none" }],
-      { duration: 240 + fall * .5, delay: 200, fill: "backwards", easing: "cubic-bezier(.5,0,.85,.55)" }).onfinish = () => {
-      if (!f.el.isConnected) return;
-      f.el.classList.add("landed"); sfx.antDrop(); antSend(f);
-    };
+    const f = { x, y, kind: Math.floor(Math.random() * LV().foods), t: 0, ant: null, carried: false,
+      fall: { dx: (px - x) / k, dy: -fall, dur: (240 + fall * .5) / 1000 },   // from the hand, after a moment; lands in antStep
+      landedAt: -1, bitten: false, bob: false, bobT: 0 };
+    foods.push(f);
     return { x: px, y: y - k * (fall + A * .25) };
   }
   function antSend(f) {
@@ -1134,35 +1081,26 @@ import { Stage } from "./render/stage";
     antQueue.push(f);
   }
   function antEmerge(f) {
-    const el = document.createElement("div");
-    el.className = "ant"; el.innerHTML = `<div class="flip">${ANT_SVG}</div>`;
-    layer.appendChild(el);
-    const a = { el, flip: el.firstElementChild, x: antHill.x, y: antHill.y, food: f, state: "out", t: 0, s: 0, tilt: 0,
+    const a = { x: antHill.x, y: antHill.y, food: f, state: "out", t: 0, s: 0, tilt: 0, pose: null, pt: 0,
       face: f.x < antHill.x ? -1 : 1 };
-    f.ant = a; ants.push(a); antDraw(a);
-  }
-  function antDraw(a) {
-    a.el.style.transform = `translate3d(${a.x - A / 2}px,${a.y - A * .667}px,0) scale(${antScale(a.y) * a.s})`;
-    a.el.style.zIndex = Math.round(a.y);
-    a.flip.style.transform = `scaleX(${a.face}) rotate(${a.tilt}deg)`;
-  }
-  function antDrawFood(f) {
-    const z = A * .5, k = antScale(f.carried ? f.ant.y : f.y) * (f.carried ? .85 : 1) * (f.s ?? 1);
-    f.el.style.transform = `translate3d(${f.x - z / 2}px,${f.y - z}px,0) scale(${k})`;
-    if (f.carried) f.el.style.zIndex = Math.round(f.ant.y) + 2;
+    f.ant = a; ants.push(a);
   }
   const ANT_SNIFF = .7, ANT_CHEW = .7, ANT_GAP = 2;
   const antSetPose = (a, pose) => {
-    a.el.classList.remove("walk", "sniff", "bite"); if (pose) a.el.classList.add(pose);
-    a.food.el.classList.toggle("bob", !!a.food.carried && pose === "walk");
+    if (a.pose !== pose) { a.pose = pose; a.pt = 0; }
+    a.food.bob = !!a.food.carried && pose === "walk";
   };
   function antStep(dt) {
     const sp = LV().speed * clamp(MIN / 700, .7, 1.2);
     antClock += dt;
     const holeBusy = () => ants.some(a => a.state === "out" || a.state === "in");
     if (antQueue.length && running && !holeBusy() && antClock >= antNextOut) { antEmerge(antQueue.shift()); antNextOut = antClock + ANT_GAP; }
+    for (const f of foods) {
+      f.t += dt; f.bobT += dt;
+      if (f.fall && f.t >= .2 + f.fall.dur) { f.fall = null; f.landedAt = f.t; sfx.antDrop(); antSend(f); }
+    }
     for (const a of ants.slice()) {
-      a.t += dt;
+      a.t += dt; a.pt += dt;
       if (a.ghost > 0) a.ghost -= dt;
       const f = a.food;
       if (a.state === "out") {
@@ -1190,20 +1128,19 @@ import { Stage } from "./render/stage";
       } else if (a.state === "sniff" && a.t >= ANT_SNIFF) {
         a.state = "bite"; a.t = 0; antSetPose(a, "bite"); sfx.antMunch();
       } else if (a.state === "bite" && a.t >= .3) {
-        f.el.classList.add("bitten");
+        f.bitten = true;
         a.state = "chew"; a.t = 0; antSetPose(a, null);
       } else if (a.state === "chew" && a.t >= ANT_CHEW) {
-        f.carried = true; layer.appendChild(f.el);
+        f.carried = true;
         a.state = "home"; a.t = 0; antSetPose(a, "walk");
         a.face = antHill.x < a.x ? -1 : 1;
       } else if (a.state === "in") {
         a.s = Math.max(0, 1 - a.t / .3); f.s = a.s;
         if (a.s <= 0) { antDelivered(a); continue; }
       }
-      if (f.carried) { f.x = a.x - a.face * A * .1; f.y = a.y - A * .43; antDrawFood(f); }
+      if (f.carried) { f.x = a.x - a.face * A * .1; f.y = a.y - A * .43; }
     }
     antCollide();
-    ants.forEach(antDraw);
     if (!running || paused) return;
     if (foods.length || ants.length) { antIdle = 0; antPeeked = false; return; }
     if (antPeekEls) return;
@@ -1221,11 +1158,10 @@ import { Stage } from "./render/stage";
       const nx = dx / d, ny = dy / d, side = a.y <= b.y ? 1 : -1, slip = push * .9;
       a.x -= nx * push * wa - ny * slip * wa * side; a.y -= ny * push * wa + nx * slip * wa * side;
       b.x += nx * push * wb - ny * slip * wb * side; b.y += ny * push * wb + nx * slip * wb * side;
-      [a, b].forEach(c => { c.x = clamp(c.x, A * .4, W - A * .4); c.y = clamp(c.y, antG.top - A * .3, antG.bot); if (c.food.carried) { c.food.x = c.x - c.face * A * .1; c.food.y = c.y - A * .43; antDrawFood(c.food); } });
+      [a, b].forEach(c => { c.x = clamp(c.x, A * .4, W - A * .4); c.y = clamp(c.y, antG.top - A * .3, antG.bot); if (c.food.carried) { c.food.x = c.x - c.face * A * .1; c.food.y = c.y - A * .43; } });
     }
   }
   function antDelivered(a) {
-    a.el.remove(); a.food.el.remove();
     ants = ants.filter(x => x !== a); foods = foods.filter(x => x !== a.food);
     if (gameOver) return;
     sfx.antHome(); burst(antHill.x, antHill.y, S * .5);
@@ -2119,13 +2055,25 @@ import { Stage } from "./render/stage";
   watchColours(() => bake(1300));
 
   // ================= Main loop =================
+  // Food on the ground lies under every ant; an ant and the food it carries are drawn nearer the front the lower they walk
+  function drawAnts(x) {
+    const z = A * .5;
+    for (const f of foods) if (!f.carried) drawFood(x, f, z, antScale(f.y) * (f.s ?? 1));
+    const near = [...ants.map(a => [Math.round(a.y), a]), ...foods.filter(f => f.carried).map(f => [Math.round(f.ant.y) + 2, f])];
+    near.sort((p, q) => p[0] - q[0]);
+    for (const [, o] of near) {
+      if (o.food) drawAnt(x, o, A, antScale(o.y));
+      else drawFood(x, o, z, antScale(o.ant.y) * .85 * (o.s ?? 1));
+    }
+  }
   function drawStage() {
-    if (!stage.begin(flies.length > 0 || beeFlowers.length > 0 || bugs.length > 0 || garden.length > 0)) return;
+    if (!stage.begin(flies.length > 0 || beeFlowers.length > 0 || bugs.length > 0 || garden.length > 0 || ants.length > 0 || foods.length > 0)) return;
     const x = stage.x, d = stage.dpr;
     for (const fl of beeFlowers) drawBeeFlower(x, fl);
     for (const fl of garden) if (!gardenGone(fl)) drawGarden(x, fl);
     for (const fl of garden) if (fl.slotAt) drawSlot(x, fl.k, fl.slotAt.x, fl.slotAt.y, B * .9, fl.t);
     for (const b of bugs) drawBug(x, b, sha);
+    if (ants.length || foods.length) drawAnts(x);
     for (const f of flies) if (!f.top) drawFlier(x, f, S * f.sc, sha, d);
     for (const f of flies) if (f.top) drawFlier(x, f, S * f.sc, sha, d);   // a caught fly stays in front
   }

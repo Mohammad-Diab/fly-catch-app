@@ -11,6 +11,12 @@ export function makeCanvas(w: number, h: number): HTMLCanvasElement {
 
 export const ctx2d = (c: HTMLCanvasElement) => c.getContext("2d")!;
 
+// A finished picture. Kept as an ImageBitmap where the browser has them: it stays on the graphics card, so drawing it
+// every frame is a plain copy (a small canvas used as a source can be uploaded again on each draw)
+export type Pic = HTMLCanvasElement | ImageBitmap;
+export const toPic = (c: HTMLCanvasElement): Promise<Pic> =>
+  typeof createImageBitmap === "function" ? createImageBitmap(c).catch(() => c) : Promise.resolve(c);
+
 // Safari before 18 has no ctx.filter; it then skips the blur
 export const canBlur = "filter" in ctx2d(makeCanvas(1, 1));
 
@@ -31,7 +37,7 @@ export function padded(img: CanvasImageSource, w: number, h: number, pad: number
 
 // Blurred black silhouette, drawn under the picture at the shadow's offset and strength.
 // Canvas shadowBlur and CSS blur radius use the same scale, so blur is the CSS drop-shadow radius in pixels
-export function silhouette(src: HTMLCanvasElement, blur: number): HTMLCanvasElement {
+export function silhouette(src: Pic, blur: number): HTMLCanvasElement {
   const c = makeCanvas(src.width, src.height), x = ctx2d(c);
   const off = src.width + blur * 4 + 8;   // the picture itself lands off the canvas, only its shadow stays
   x.shadowColor = "#000";
@@ -42,7 +48,7 @@ export function silhouette(src: HTMLCanvasElement, blur: number): HTMLCanvasElem
 }
 
 // The picture with a fixed drop shadow baked in
-export function withShadow(src: HTMLCanvasElement, dx: number, dy: number, blur: number, color: string): HTMLCanvasElement {
+export function withShadow(src: Pic, dx: number, dy: number, blur: number, color: string): HTMLCanvasElement {
   const c = makeCanvas(src.width, src.height), x = ctx2d(c);
   x.shadowColor = color;
   x.shadowBlur = blur;

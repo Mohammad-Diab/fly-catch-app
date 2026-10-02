@@ -6,7 +6,7 @@
   src:url(../fonts/baloo-bhaijaan-2-latin.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 
 :root{
-  --build:36;
+  --build:37;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -333,18 +333,7 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
 .anthill svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 6px rgba(0,0,0,.18))}
 @keyframes hillPop{40%{scale:1.08 .92}}
 @keyframes hillGrow{from{scale:0}}
-.ant{position:absolute;left:0;top:0;width:var(--a);height:calc(var(--a) * .667);transform-origin:50% 100%;will-change:transform}
-.ant .flip{width:100%;height:100%}
-.ant svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25))}
-.ant .ta,.ant .tb,.ant .antn{transform-box:view-box}
-.ant .head{transform-box:view-box;transform-origin:78px 40px}
-.ant.walk .ta{animation:antStep .32s linear infinite}
-.ant.walk .tb{animation:antStep .32s linear -.16s infinite}
-.ant.walk .antn{animation:antFeel .64s ease-in-out infinite alternate}
-.ant.walk svg{animation:antBob .16s ease-in-out infinite alternate}
-.ant.bite .head{animation:munch .15s ease-in-out 2 alternate}
-.ant.sniff .antn{animation:antFeel .25s ease-in-out infinite alternate}
-@keyframes antStep{0%{rotate:-13deg;translate:0 0}55%{rotate:13deg;translate:0 0}78%{rotate:0deg;translate:0 -4px}100%{rotate:-13deg;translate:0 0}}
+/* Ants and their food are drawn on the stage canvas (src/ants/look.ts) */
 @keyframes antFeel{from{rotate:-6deg}to{rotate:5deg}}
 /* Menu ant takes a few steps now and then; standing still the rest of the cycle, so there's nothing to redraw */
 .big.ant .ico .ta,.big.ant .ico .tb,.big.ant .ico .antn{transform-box:view-box}
@@ -354,16 +343,6 @@ body[data-mode="ants"]{--sky-top:#9FD4F2;--sky-bot:#FFF1D2;--hill-far:#B9D98A;--
 @keyframes menuStepA{0%,27%,100%{rotate:0deg}3.4%{rotate:-13deg}10%{rotate:13deg}16.7%{rotate:-13deg}23.4%{rotate:13deg}}
 @keyframes menuStepB{0%,27%,100%{rotate:0deg}3.4%{rotate:13deg}10%{rotate:-13deg}16.7%{rotate:13deg}23.4%{rotate:-13deg}}
 @keyframes menuFeel{0%,27%,100%{rotate:0deg}9%{rotate:-7deg}19%{rotate:6deg}}
-@keyframes antBob{to{translate:0 -2%}}
-@keyframes munch{to{rotate:14deg}}
-.food{position:absolute;left:0;top:0;width:calc(var(--a) * .5);height:calc(var(--a) * .5);transform-origin:50% 100%}
-.food .in{width:100%;height:100%;transform-origin:50% 100%}
-.food svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 4px 3px rgba(0,0,0,.22))}
-.food.landed .in{animation:foodLand .3s ease}
-.food.bitten svg{--bite:radial-gradient(circle at var(--bx,84%) var(--by,18%),transparent var(--br,26%),#000 calc(var(--br,26%) + 1%));-webkit-mask:var(--bite);mask:var(--bite)}
-@keyframes foodLand{40%{scale:1.18 .82}}
-.food.bob .in{animation:foodBob .16s ease-in-out infinite alternate}
-@keyframes foodBob{from{translate:0 0;rotate:-4deg}to{translate:0 -9%;rotate:4deg}}
 .antpeek{position:absolute;left:0;top:0;overflow:hidden;pointer-events:none}
 .antpeek .peekhead{position:absolute;left:calc(50% - var(--a) * .33);top:100%;width:calc(var(--a) * .66);height:calc(var(--a) * .86);
   transform-origin:50% 100%;animation:antPeek 2.6s ease-in-out both}
@@ -728,6 +707,14 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
 .ni > *,.ni svg{width:100%;display:block;overflow:visible}
 .ni svg{height:auto;filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}
 .nstage .ant{position:relative;width:100%;height:auto;aspect-ratio:3/2}
+.nstage .ant .flip{width:100%;height:100%}
+.nstage .ant svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 4px 3px rgba(0,0,0,.25));animation:antBob .16s ease-in-out infinite alternate}
+.nstage .ant .ta,.nstage .ant .tb,.nstage .ant .antn{transform-box:view-box}
+.nstage .ant .ta{animation:antStep .32s linear infinite}
+.nstage .ant .tb{animation:antStep .32s linear -.16s infinite}
+.nstage .ant .antn{animation:antFeel .64s ease-in-out infinite alternate}
+@keyframes antStep{0%{rotate:-13deg;translate:0 0}55%{rotate:13deg;translate:0 0}78%{rotate:0deg;translate:0 -4px}100%{rotate:-13deg;translate:0 0}}
+@keyframes antBob{to{translate:0 -2%}}
 .nstage .wings{transform-origin:50px 50px;animation:bflap .34s ease-in-out infinite}
 .nstage .glow{opacity:0}
 .ntrophy{color:#E0A21B}
@@ -795,7 +782,7 @@ html.split-cards #chTitle{font-size:clamp(22px,5vmin,34px)}
   .hero{animation:none}
   .confetti{display:none}
   .overlay.show .card,.overlay.show .card *,.big::after,.ks-btn{animation:none !important}
-  .ant.walk .ta,.ant.walk .tb,.ant.walk .antn,.ant.walk svg,.ant.bite .head,.ant.sniff .antn,.food.bob .in{animation:none}
   #newsBtn .cico,#newsBtn::after{animation:none}
+  .nstage .ant svg,.nstage .ant .ta,.nstage .ant .tb,.nstage .ant .antn{animation:none}
   ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none !important}
 }

@@ -1,6 +1,6 @@
 import { cubicBezier, ease, easeIn, easeInOut, keyframes } from "../render/ease";
 import { calm } from "../render/motion";
-import { PicCache, padded, silhouette, svgImage, withShadow } from "../render/sprites";
+import { type Pic, PicCache, padded, silhouette, svgImage, toPic, withShadow } from "../render/sprites";
 import { type BfColor, butterflySVG, gardenFlowerSVG, standalone } from "./art";
 
 // How butterflies, their garden flowers and the dashed "put me here" spots are drawn on the stage canvas.
@@ -37,7 +37,7 @@ function wingScale(ph: number) {
   return ph < .5 ? 1 - .8 * easeInOut(ph * 2) : .2 + .8 * easeInOut(ph * 2 - 1);
 }
 
-interface BugFrame { img: HTMLCanvasElement; sh: HTMLCanvasElement; glow?: HTMLCanvasElement }
+interface BugFrame { img: Pic; sh: Pic; glow?: HTMLCanvasElement }
 interface BugSet { px: number; dpr: number; frames: BugFrame[] }
 const bugSets = new PicCache<BugSet>();
 
@@ -46,7 +46,7 @@ async function makeBugs(k: BfColor, px: number, dpr: number): Promise<BugSet> {
   const frames = await Promise.all(Array.from({ length: WING_STEPS }, async (_, i) => {
     const s = .2 + .8 * i / (WING_STEPS - 1);
     const img = padded(await svgImage(standalone(butterflySVG(k, false, s), k), px, px), px, px, pad);
-    return { img, sh: silhouette(img, 5 * dpr) };
+    return { img: await toPic(img), sh: await toPic(silhouette(img, 5 * dpr)) };
   }));
   return { px, dpr, frames };
 }
@@ -101,14 +101,14 @@ export interface GardenLook {
 }
 
 const GLOWS = 6;   // glow strengths drawn ahead between the pulse's 8% and 38%
-interface FlowerSet { px: number; pad: number; pics: (HTMLCanvasElement | undefined)[] }
+interface FlowerSet { px: number; pad: number; pics: (Pic | undefined)[] }
 const flowerSets = new PicCache<FlowerSet>();
 let flowerPx = 0, flowerDpr = 1;
 
 async function makeFlower(k: BfColor, px: number, dpr: number, glow: number) {
   const h = Math.round(px * 140 / 120), pad = Math.ceil(20 * dpr);
   const img = await svgImage(standalone(gardenFlowerSVG(k, glow), k), px, h);
-  return withShadow(padded(img, px, h, pad), 0, 8 * dpr, 6 * dpr, "rgba(0,0,0,.16)");
+  return toPic(withShadow(padded(img, px, h, pad), 0, 8 * dpr, 6 * dpr, "rgba(0,0,0,.16)"));
 }
 // Index 0 has no glow; 1..GLOWS step through the pulse
 const glowLevel = (i: number) => i ? .08 + .3 * (i - 1) / (GLOWS - 1) : 0;
@@ -160,9 +160,9 @@ export function drawGarden(x: CanvasRenderingContext2D, fl: GardenLook) {
 }
 
 // ---------- "Put me here" spot ----------
-const slots = new PicCache<HTMLCanvasElement>();
+const slots = new PicCache<Pic>();
 let slotPx = 0;
-const slotPic = (k: BfColor) => slots.get(k.id + "|" + slotPx, () => svgImage(butterflySVG(k, true), slotPx, slotPx).then(i => padded(i, slotPx, slotPx, 0)), k.id);
+const slotPic = (k: BfColor) => slots.get(k.id + "|" + slotPx, () => svgImage(butterflySVG(k, true), slotPx, slotPx).then(i => toPic(padded(i, slotPx, slotPx, 0))), k.id);
 export function wantSlots(ks: readonly BfColor[], px: number) {
   slotPx = Math.round(px);
   slots.keepOnly(key => key.endsWith("|" + slotPx));

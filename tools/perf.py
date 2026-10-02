@@ -21,6 +21,8 @@ Uses only the Python standard library. Needs Chrome, and pwsh for the CPU and GP
 import base64, json, os, socket, struct, subprocess, sys, tempfile, time, urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 PORT, DBG = 8765, 9333
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 PROFILE = os.path.join(tempfile.gettempdir(), "fly-catch-perf-profile")
