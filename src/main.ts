@@ -16,7 +16,7 @@ import { moveMenu, resetMenu } from "./menu/motion";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 41;
+  const BUILD = 42;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
@@ -2100,7 +2100,12 @@ import { moveMenu, resetMenu } from "./menu/motion";
   }
   // The start menu runs at about 30 frames a second: its slow sways and flaps look the same, at half the work or less
   let menuAt = -1, menuLast = 0, cloudDt = 0;
+  // At most 60 frames a second: a 90, 120 or 144 Hz screen skips frames, so the slow flies and butterflies cost half the work there
+  const STEP = 1000 / 60;
+  let due = 0;
   function frame(t) {
+    if (t < due - 2) { requestAnimationFrame(frame); return; }
+    due = t - due > STEP ? t + STEP - 2 : due + STEP;
     const gap = (t - last) / 1000, dt = Math.min(.05, gap || 0);
     last = t;
     const menu = !document.hidden && startScreen.classList.contains("show");
