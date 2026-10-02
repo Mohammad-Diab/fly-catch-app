@@ -36,7 +36,7 @@ const flierSets = new Map<string, FrameSet>(), making = new Set<string>(), lates
 let wantedFliers = new Set<string>();
 
 // Wings swing 6° to 56° from the body and fade to half, like the CSS flap; null keeps them folded
-function wingsAt(kind: Kind, ph: number | null) {
+export function wingsAt(kind: Kind, ph: number | null) {
   const g = (side: number) => ph === null ? "<g>"
     : `<g transform="rotate(${(side * (6 + 50 * ph)).toFixed(2)} 50 44)" opacity="${(.95 - .45 * ph).toFixed(3)}">`;
   return (kind === "bee" ? BEE_SVG : FLY_SVG).replace('<g class="wing wl">', g(-1)).replace('<g class="wing wr">', g(1));

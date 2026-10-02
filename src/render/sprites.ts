@@ -92,6 +92,11 @@ export class PicCache<T> {
     return this.near.get(group);
   }
 
+  // Only the exact picture, never a near one
+  peek(key: string): T | undefined {
+    return this.ready.get(key);
+  }
+
   // Drops pictures that are no longer wanted, e.g. old sizes after a resize; the near ones stay until replaced
   keepOnly(wanted: (key: string) => boolean) {
     for (const k of [...this.ready.keys()]) if (!wanted(k)) this.ready.delete(k);

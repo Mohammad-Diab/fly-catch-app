@@ -7,13 +7,14 @@ import { drawAnt, drawFood, wantAnts, wantFoods } from "./ants/look";
 import { bugSize, drawBug, drawGarden, drawSlot, flap, gardenGone, wantBugs, wantGarden, wantSlots } from "./butterflies/look";
 import { bakeScenery, watchColours } from "./render/scenery";
 import { Stage } from "./render/stage";
+import { addIcon, antLook, butterflyLook, drawIcons, flierLook, sizeIcons } from "./menu/icons";
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
   const VERSION = "1.18.1";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 37;
+  const BUILD = 38;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
@@ -165,7 +166,7 @@ import { Stage } from "./render/stage";
     stage.resize(W, H);
     bfMeasure(); antMeasure(); prepareArt(); bfLayout();
     sizeNet(cursorNet);
-    fitCards();
+    fitCards(); sizeIcons();
   }
   // Pictures for this mode's flies, bees and flowers, made ahead at the size they'll be drawn
   function prepareArt() {
@@ -1022,6 +1023,13 @@ import { Stage } from "./render/stage";
   ];
   const ANT_MAX_FOOD = 2, ANT_PEEK_AFTER = 6, ANT_HUNGRY_AFTER = 12;
   document.querySelectorAll('[data-ico="ant"]').forEach(e => { e.innerHTML = ANT_SVG; });
+  // The menu's moving pictures: drawn on canvases (src/menu/icons.ts)
+  const heroShadow = { dy: 12, blur: 10, color: "rgba(0,0,0,.16)" }, icoShadow = { dy: 3, blur: 2, color: "rgba(0,0,0,.2)" };
+  addIcon($("heroFly"), flierLook("fly"), heroShadow);
+  addIcon($("startBtn").querySelector(".ico"), flierLook("fly"), icoShadow);
+  addIcon($("beesBtn").querySelector(".ico"), flierLook("bee"), icoShadow);
+  addIcon($("bfBtn").querySelector(".ico"), butterflyLook(BF_COLORS[1]), icoShadow);
+  addIcon($("antBtn").querySelector(".ico"), antLook, icoShadow);
 
   let ants = [], foods = [], A = 90, antHill = { x: 0, y: 0 }, antG = { top: 0, bot: 0 }, antHillEl = null, antGroundEl = null;
   let antIdle = 0, antPeeked = false, antPeekEls = null, antQueue = [], antClock = 0, antNextOut = 0;
@@ -2103,6 +2111,7 @@ import { Stage } from "./render/stage";
     if (beeFlowers.some(flowerGone)) beeFlowers = beeFlowers.filter(fl => !flowerGone(fl));
     if (t - lastLight > 100) { lastLight = t; updateLight(); }   // 10 times a second is enough
     if (!document.hidden && (!paused || stage.dirty)) drawStage();
+    if (!document.hidden && startScreen.classList.contains("show")) drawIcons(t / 1000);
     // Per insect: pan follows position, bigger ones slightly louder
     for (const f of flies) {
       if (!f.voice) continue;

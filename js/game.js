@@ -180,6 +180,10 @@
       }
       return this.near.get(group);
     }
+    // Only the exact picture, never a near one
+    peek(key2) {
+      return this.ready.get(key2);
+    }
     // Drops pictures that are no longer wanted, e.g. old sizes after a resize; the near ones stay until replaced
     keepOnly(wanted) {
       for (const k of [...this.ready.keys()]) if (!wanted(k)) this.ready.delete(k);
@@ -490,13 +494,16 @@
   var legAt = (u) => keyframes(STEP, u);
   var feelerAt = (i) => -6 + 11 * i / (FEELERS - 1);
   var headAt = (i) => 14 * i / (HEADS - 1);
-  function antSVG(li, fi, hi) {
+  function antPoseSVG(p) {
     const leg = (cls, x, y) => {
-      if (li < 0) return "";
-      const [r, ty] = legAt((li / LEGS + (cls === "tb" ? 0.5 : 0)) % 1);
-      return `transform="translate(0 ${ty.toFixed(2)}) rotate(${r.toFixed(2)} ${x} ${y})"`;
+      const [r, ty] = cls === "ta" ? p.a : p.b;
+      return r || ty ? `transform="translate(0 ${ty.toFixed(2)}) rotate(${r.toFixed(2)} ${x} ${y})"` : "";
     };
-    return ANT_SVG.replace(/class="(ta|tb)" style="transform-origin:(\d+)px (\d+)px"/g, (_m, cls, x, y) => leg(cls, x, y)).replace('<g class="antn" style="transform-origin:89px 22px">', fi < 0 ? "<g>" : `<g transform="rotate(${feelerAt(fi).toFixed(2)} 89 22)">`).replace('<g class="head">', hi ? `<g transform="rotate(${headAt(hi).toFixed(2)} 78 40)">` : "<g>");
+    return ANT_SVG.replace(/class="(ta|tb)" style="transform-origin:(\d+)px (\d+)px"/g, (_m, cls, x, y) => leg(cls, x, y)).replace('<g class="antn" style="transform-origin:89px 22px">', p.feeler ? `<g transform="rotate(${p.feeler.toFixed(2)} 89 22)">` : "<g>").replace('<g class="head">', p.head ? `<g transform="rotate(${p.head.toFixed(2)} 78 40)">` : "<g>");
+  }
+  function antSVG(li, fi, hi) {
+    const step = (u) => li < 0 ? [0, 0] : legAt(u % 1);
+    return antPoseSVG({ a: step(li / LEGS), b: step(li / LEGS + 0.5), feeler: fi < 0 ? 0 : feelerAt(fi), head: hi ? headAt(hi) : 0 });
   }
   var antPics = new PicCache();
   var antW = 0;
@@ -671,8 +678,8 @@
   }
   var glowLevel = (i) => i ? 0.08 + 0.3 * (i - 1) / (GLOWS - 1) : 0;
   async function makeFlowers(k, px, dpr) {
-    const pics = await Promise.all(Array.from({ length: GLOWS + 1 }, (_, i) => makeFlower(k, px, dpr, glowLevel(i))));
-    return { px, pad: Math.ceil(20 * dpr), pics };
+    const pics2 = await Promise.all(Array.from({ length: GLOWS + 1 }, (_, i) => makeFlower(k, px, dpr, glowLevel(i))));
+    return { px, pad: Math.ceil(20 * dpr), pics: pics2 };
   }
   var flowerKey = (k, px) => k.id + "|" + Math.round(px);
   function wantGarden(ks, px, dpr) {
@@ -842,12 +849,81 @@
     }
   };
 
+  // src/menu/icons.ts
+  var flierLook = (kind) => (t) => {
+    const u = t / 0.1 % 1, i = Math.round((u < 0.5 ? u * 2 : 2 - u * 2) * 4);
+    return { key: kind + i, svg: () => wingsAt(kind, i / 4) };
+  };
+  var butterflyLook = (k) => (t) => {
+    const ph = t / 0.7 % 1, s = ph < 0.5 ? 1 - 0.8 * easeInOut(ph * 2) : 0.2 + 0.8 * easeInOut(ph * 2 - 1);
+    const i = Math.round((s - 0.2) / 0.8 * 6);
+    return { key: "bf" + k.id + i, svg: () => standalone(butterflySVG(k, false, 0.2 + 0.8 * i / 6), k) };
+  };
+  var MENU_STEP = [[0, 0], [0.034, -13], [0.1, 13], [0.167, -13], [0.234, 13], [0.27, 0], [1, 0]];
+  var MENU_FEEL = [[0, 0], [0.09, -7], [0.19, 6], [0.27, 0], [1, 0]];
+  var antLook = (t) => {
+    const u = t / 4.8 % 1;
+    const leg = Math.round(keyframes(MENU_STEP, u, linear)[0] / 3.25) * 3.25, feel = Math.round(keyframes(MENU_FEEL, u, easeInOut)[0]);
+    return { key: `ant${leg}|${feel}`, svg: () => antPoseSVG({ a: [leg, 0], b: [-leg, 0], feeler: feel, head: 0 }) };
+  };
+  var PAD2 = 0.2;
+  var icons = [];
+  var pics = new PicCache();
+  function addIcon(el, look, shadow) {
+    const c = document.createElement("canvas");
+    c.className = "pic";
+    c.setAttribute("aria-hidden", "true");
+    el.replaceChildren(c);
+    el.classList.add("drawn");
+    icons.push({ el, c, look, shadow, key: "", w: 0, h: 0, k: 1 });
+  }
+  function sizeIcons() {
+    const k = pixelRatio(), keep = /* @__PURE__ */ new Set();
+    for (const i of icons) {
+      i.w = Math.round(i.el.offsetWidth * k);
+      i.h = Math.round(i.el.offsetHeight * k);
+      i.k = k;
+      const cw = Math.round(i.w * (1 + PAD2 * 2)), ch = Math.round(i.h * (1 + PAD2 * 2));
+      if (i.c.width !== cw || i.c.height !== ch) {
+        i.c.width = cw;
+        i.c.height = ch;
+        i.key = "";
+      }
+      keep.add(`${i.w}x${i.h}`);
+    }
+    pics.keepOnly((key2) => keep.has(key2.slice(key2.lastIndexOf("|") + 1)));
+  }
+  function drawIcons(t) {
+    for (const i of icons) {
+      if (!i.w || !i.h) continue;
+      const p = i.look(t);
+      if (p.key === i.key) continue;
+      const key2 = `${p.key}|${i.w}x${i.h}`, w = i.w, h = i.h, sh = i.shadow, k = i.k;
+      const pic = pics.peek(key2);
+      if (!pic) {
+        pics.get(key2, () => svgImage(p.svg(), w, h).then((img) => toPic(withShadow(drawn(img, w, h), 0, sh.dy * k, sh.blur * k, sh.color))));
+        continue;
+      }
+      const x = ctx2d(i.c);
+      x.clearRect(0, 0, i.c.width, i.c.height);
+      x.drawImage(pic, 0, 0);
+      i.key = p.key;
+    }
+  }
+  function drawn(img, w, h) {
+    const c = document.createElement("canvas"), pw = Math.round(w * PAD2), ph = Math.round(h * PAD2);
+    c.width = w + pw * 2;
+    c.height = h + ph * 2;
+    ctx2d(c).drawImage(img, pw, ph, w, h);
+    return c;
+  }
+
   // src/main.ts
   (() => {
     const VERSION = "1.18.1";
     window.GAME_VERSION = VERSION;
     console.info("Fly Catcher v" + VERSION);
-    const BUILD = 37;
+    const BUILD = 38;
     const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
     const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);
     document.querySelectorAll(".ver").forEach((e) => {
@@ -996,6 +1072,7 @@
       bfLayout();
       sizeNet(cursorNet);
       fitCards();
+      sizeIcons();
     }
     function prepareArt() {
       const d = stage.dpr, pool = SIZES[MODE] || [];
@@ -2218,6 +2295,12 @@
     document.querySelectorAll('[data-ico="ant"]').forEach((e) => {
       e.innerHTML = ANT_SVG;
     });
+    const heroShadow = { dy: 12, blur: 10, color: "rgba(0,0,0,.16)" }, icoShadow = { dy: 3, blur: 2, color: "rgba(0,0,0,.2)" };
+    addIcon($("heroFly"), flierLook("fly"), heroShadow);
+    addIcon($("startBtn").querySelector(".ico"), flierLook("fly"), icoShadow);
+    addIcon($("beesBtn").querySelector(".ico"), flierLook("bee"), icoShadow);
+    addIcon($("bfBtn").querySelector(".ico"), butterflyLook(BF_COLORS[1]), icoShadow);
+    addIcon($("antBtn").querySelector(".ico"), antLook, icoShadow);
     let ants = [], foods = [], A = 90, antHill = { x: 0, y: 0 }, antG = { top: 0, bot: 0 }, antHillEl = null, antGroundEl = null;
     let antIdle = 0, antPeeked = false, antPeekEls = null, antQueue = [], antClock = 0, antNextOut = 0;
     const antScale = (y) => 0.82 + 0.28 * clamp((y - antG.top) / Math.max(1, antG.bot - antG.top), 0, 1);
@@ -3686,6 +3769,7 @@
         updateLight();
       }
       if (!document.hidden && (!paused || stage.dirty)) drawStage();
+      if (!document.hidden && startScreen.classList.contains("show")) drawIcons(t / 1e3);
       for (const f of flies) {
         if (!f.voice) continue;
         const moving = f.state === "fly" || f.state === "exit";

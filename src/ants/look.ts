@@ -24,17 +24,22 @@ const legAt = (u: number) => keyframes(STEP, u);
 const feelerAt = (i: number) => -6 + 11 * i / (FEELERS - 1);
 const headAt = (i: number) => 14 * i / (HEADS - 1);
 
-// li: leg step or -1 standing; fi: antenna angle or -1 straight; hi: head turn
-function antSVG(li: number, fi: number, hi: number) {
+// The ant in one pose: each set of legs turned (degrees) and lifted, the antennae and the head turned
+export interface AntPose { a: [number, number]; b: [number, number]; feeler: number; head: number }
+export function antPoseSVG(p: AntPose) {
   const leg = (cls: string, x: string, y: string) => {
-    if (li < 0) return "";
-    const [r, ty] = legAt(((li / LEGS) + (cls === "tb" ? .5 : 0)) % 1);
-    return `transform="translate(0 ${ty.toFixed(2)}) rotate(${r.toFixed(2)} ${x} ${y})"`;
+    const [r, ty] = cls === "ta" ? p.a : p.b;
+    return r || ty ? `transform="translate(0 ${ty.toFixed(2)}) rotate(${r.toFixed(2)} ${x} ${y})"` : "";
   };
   return ANT_SVG
     .replace(/class="(ta|tb)" style="transform-origin:(\d+)px (\d+)px"/g, (_m, cls, x, y) => leg(cls, x, y))
-    .replace('<g class="antn" style="transform-origin:89px 22px">', fi < 0 ? "<g>" : `<g transform="rotate(${feelerAt(fi).toFixed(2)} 89 22)">`)
-    .replace('<g class="head">', hi ? `<g transform="rotate(${headAt(hi).toFixed(2)} 78 40)">` : "<g>");
+    .replace('<g class="antn" style="transform-origin:89px 22px">', p.feeler ? `<g transform="rotate(${p.feeler.toFixed(2)} 89 22)">` : "<g>")
+    .replace('<g class="head">', p.head ? `<g transform="rotate(${p.head.toFixed(2)} 78 40)">` : "<g>");
+}
+// li: leg step or -1 standing; fi: antenna angle or -1 straight; hi: head turn
+function antSVG(li: number, fi: number, hi: number) {
+  const step = (u: number) => li < 0 ? [0, 0] as [number, number] : legAt(u % 1) as [number, number];
+  return antPoseSVG({ a: step(li / LEGS), b: step(li / LEGS + .5), feeler: fi < 0 ? 0 : feelerAt(fi), head: hi ? headAt(hi) : 0 });
 }
 
 interface Frame { img: Pic; sh: Pic; w: number }
