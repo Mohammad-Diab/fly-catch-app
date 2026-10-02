@@ -6,7 +6,7 @@
   src:url(../fonts/baloo-bhaijaan-2-latin.woff2) format("woff2");unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 
 :root{
-  --build:34;
+  --build:35;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -83,21 +83,17 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 
 /* Scenery behind the glass */
 .outside{position:absolute;inset:0;pointer-events:none}
-.outside > *{filter:blur(1.4px)}   /* per shape, so a drifting cloud doesn't re-blur the whole sky every frame */
+/* Hills, tree, flowers and clouds are drawn once, blurred, by the game (src/render/scenery.ts) from these shapes' sizes and colours */
+.outside .shape{visibility:hidden}
+.outside .ground{position:absolute;inset:0;width:100%;height:100%}
 .sun{
-  position:absolute;top:11%;left:9%;width:clamp(66px,15vmin,140px);aspect-ratio:1;border-radius:50%;
+  position:absolute;top:11%;left:9%;width:clamp(66px,15vmin,140px);aspect-ratio:1;border-radius:50%;filter:blur(1.4px);
   background:var(--sun);box-shadow:0 0 0 14px var(--sun-glow),0 0 70px 30px var(--sun-glow);
 }
-.cloud{
-  position:absolute;left:0;height:clamp(26px,6vmin,46px);border-radius:999px;background:var(--cloud);
-  animation:drift linear infinite;
-}
-.cloud::before,.cloud::after{content:"";position:absolute;border-radius:50%;background:var(--cloud)}
-.cloud::before{width:48%;aspect-ratio:1;left:14%;bottom:30%}
-.cloud::after{width:36%;aspect-ratio:1;right:16%;bottom:24%}
-.c1{top:16%;width:clamp(110px,24vmin,200px);animation-duration:90s;animation-delay:-20s}
-.c2{top:30%;width:clamp(80px,17vmin,150px);animation-duration:120s;animation-delay:-70s;opacity:.85}
-@keyframes drift{from{transform:translateX(-110%)}to{transform:translateX(calc(100vw + 10%))}}
+.cloud{position:absolute;left:0;height:clamp(26px,6vmin,46px)}
+.cloud canvas{position:absolute;display:block;will-change:transform}   /* moved by the game loop */
+.c1{top:16%;width:clamp(110px,24vmin,200px)}
+.c2{top:30%;width:clamp(80px,17vmin,150px);opacity:.85}
 .hill{position:absolute;border-radius:50%}
 .h1{width:150%;height:62%;left:-40%;bottom:-32%;background:var(--hill-far)}
 .h2{width:130%;height:52%;right:-45%;bottom:-30%;background:var(--hill-near)}
@@ -120,27 +116,18 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 }
 
 .layer,.fx,.flora{position:absolute;inset:0;pointer-events:none}
-.bflower{position:absolute;left:0;top:0;transform-origin:50% 100%;animation:bloom .7s cubic-bezier(.2,1.5,.4,1) both}
-.bflower svg{width:100%;height:100%;display:block;overflow:visible;filter:drop-shadow(0 6px 5px rgba(0,0,0,.18))}
-.bflower.wilt{animation:wilt .6s ease-in forwards}
-@keyframes bloom{from{transform:scale(0) rotate(-12deg);opacity:.2}to{transform:scale(1) rotate(0);opacity:1}}
-@keyframes wilt{to{transform:scale(0) rotate(10deg);opacity:0}}
+.stage{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}   /* flies, bees and their flowers */
 .layer{z-index:2}
 .fx{z-index:3}
 
 /* ================= Fly ================= */
-.fly{position:absolute;left:0;top:0;width:var(--fly,70px);height:var(--fly,70px);will-change:transform}
-.fly .body{width:100%;height:100%;will-change:transform;
-  filter:drop-shadow(0 calc(var(--fly,70px)*.09) calc(var(--fly,70px)*.06) rgba(0,0,0,var(--sha,.28)))}
-.fly svg,.hero svg,.mini svg{width:100%;height:100%;display:block;overflow:visible}
+.hero svg,.mini svg{width:100%;height:100%;display:block;overflow:visible}
 .wing{transform-origin:50px 44px}
 .flying .wl{animation:flapL .05s linear infinite alternate}
 .flying .wr{animation:flapR .05s linear infinite alternate}
 @keyframes flapL{from{transform:rotate(-6deg);opacity:.95}to{transform:rotate(-56deg);opacity:.5}}
 @keyframes flapR{from{transform:rotate(6deg);opacity:.95}to{transform:rotate(56deg);opacity:.5}}
 
-.fly.caught svg{animation:squash .46s cubic-bezier(.3,1.7,.5,1)}
-.fly.dodge svg{animation:dodge .4s ease-out}
 
 /* Bee-hit alert: shaking ✕ badge and glowing red edges */
 .bee-alert{position:absolute;z-index:6;left:0;top:0;transform:translate(-50%,-50%);
@@ -163,36 +150,12 @@ html:not([lang]) .hud,html:not([lang]) .card{visibility:hidden}
 .glass::after{content:"";position:absolute;inset:0;z-index:9;pointer-events:none;border-radius:inherit;
   box-shadow:inset 0 0 0 0 rgba(255,90,90,0);transition:box-shadow .55s ease-out}
 .glass.warn::after{box-shadow:inset 0 0 70px 20px rgba(255,90,90,.42);transition:box-shadow .08s ease-out}
-@keyframes dodge{
-  0%{transform:scale(1)} 20%{transform:scale(1.25) rotate(-14deg)}
-  45%{transform:scale(.92) rotate(10deg)} 70%{transform:rotate(-6deg)} 100%{transform:scale(1)}
-}
 @keyframes squash{
   0%{transform:scale(1)}
   30%{transform:scale(1.22,.78)}
   55%{transform:scale(.9,1.12) rotate(-6deg)}
   75%{transform:scale(1.04,.97) rotate(4deg)}
   100%{transform:scale(1)}
-}
-
-/* Dizzy stars */
-.dizzy{position:absolute;left:50%;top:18%;width:0;height:0;opacity:0;transition:opacity .2s}
-.fly.dizzy-on .dizzy{opacity:1}
-.fly.dizzy-on .dizzy i{animation-play-state:running}
-.dizzy i{
-  position:absolute;left:calc(var(--fly,70px)*-.12);top:calc(var(--fly,70px)*-.12);
-  width:calc(var(--fly,70px)*.24);aspect-ratio:1;background:var(--star);
-  clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
-  animation:orbit .9s linear infinite paused;
-}
-.dizzy i:nth-child(2){animation-delay:-.3s}
-.dizzy i:nth-child(3){animation-delay:-.6s}
-@keyframes orbit{
-  0%  {transform:translate(0,calc(var(--fly,70px)*-.16)) scale(1)}
-  25% {transform:translate(calc(var(--fly,70px)*.3),0) scale(.72)}
-  50% {transform:translate(0,calc(var(--fly,70px)*.16)) scale(.5)}
-  75% {transform:translate(calc(var(--fly,70px)*-.3),0) scale(.72)}
-  100%{transform:translate(0,calc(var(--fly,70px)*-.16)) scale(1)}
 }
 
 /* ================= Net and effects ================= */

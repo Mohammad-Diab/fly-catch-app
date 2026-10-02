@@ -65,6 +65,7 @@ screenshots/          install-window screenshots listed in the manifest (wide an
 icons/share.jpg       1200×630 preview card for links shared on WhatsApp and social apps
 fonts/                Baloo Bhaijaan 2, shipped with the game (SIL Open Font License, see fonts/OFL.txt)
 tools/check.py        release checks, run before every push
+tools/perf.py         drives the game in Chrome to measure its speed and take screenshots (plans in tools/plans/)
 docs/FEATURES.md      feature checklist and design rules for every mode
 CHANGELOG.md          what changed in each version
 ```

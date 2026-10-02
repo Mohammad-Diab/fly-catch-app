@@ -1,74 +1,21 @@
 // @ts-nocheck   (legacy code, typed piece by piece as it moves into its own modules)
+import { BEE_SVG, FLY_SVG, PETALS, flowerSVG } from "./flies/art";
+import { drawBeeFlower, drawFlier, flowerGone, wantFliers, wantFlowers } from "./flies/look";
+import { bakeScenery, watchColours } from "./render/scenery";
+import { Stage } from "./render/stage";
 (() => {
   // Bump on every release and keep in sync with VERSION in sw.js, or installed apps stay on the old one
   const VERSION = "1.18.1";
   window.GAME_VERSION = VERSION;
   console.info("Fly Catcher v" + VERSION);
   // Development only: bump BUILD here and --build in style.css on every change, so a stale file shows its old number
-  const BUILD = 34;
+  const BUILD = 35;
   const css = getComputedStyle(document.documentElement).getPropertyValue("--build").trim();
   const dev = location.protocol === "file:" || /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(location.hostname);   // this computer or the home network
   document.querySelectorAll(".ver").forEach(e => { e.textContent = "v" + VERSION + (dev ? ` · js ${BUILD} · css ${css || "?"}` : ""); });
 
   // ================= Graphics =================
-  const FLY_SVG = `
-<svg viewBox="0 0 100 100" aria-hidden="true">
-  <g stroke="#2A2A30" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" fill="none">
-    <path d="M44 41 L31 33 L25 37"/><path d="M56 41 L69 33 L75 37"/>
-    <path d="M43 47 L27 49 L20 55"/><path d="M57 47 L73 49 L80 55"/>
-    <path d="M44 53 L33 63 L29 73"/><path d="M56 53 L67 63 L71 73"/>
-  </g>
-  <ellipse cx="50" cy="64" rx="12.5" ry="17" fill="#34343D"/>
-  <path d="M38.8 59 Q50 62.5 61.2 59" stroke="#4E4E5A" stroke-width="3" fill="none"/>
-  <path d="M39.6 67 Q50 70.5 60.4 67" stroke="#4E4E5A" stroke-width="3" fill="none"/>
-  <ellipse cx="50" cy="44" rx="11.5" ry="11" fill="#2B2B33"/>
-  <path d="M46 36 L46 51 M54 36 L54 51" stroke="#3F3F4A" stroke-width="2" stroke-linecap="round"/>
-  <circle cx="50" cy="28" r="9.5" fill="#2B2B33"/>
-  <ellipse cx="42.6" cy="26" rx="6.6" ry="7.6" fill="#9B2F2A"/>
-  <ellipse cx="57.4" cy="26" rx="6.6" ry="7.6" fill="#9B2F2A"/>
-  <circle cx="40.6" cy="23.2" r="1.9" fill="#fff" opacity=".85"/>
-  <circle cx="55.4" cy="23.2" r="1.9" fill="#fff" opacity=".85"/>
-  <g class="wing wl">
-    <ellipse cx="37" cy="61" rx="11" ry="24" transform="rotate(26 37 61)"
-             fill="rgba(214,236,255,.58)" stroke="rgba(110,140,170,.75)" stroke-width="1"/>
-    <path d="M47 46 Q38 58 30 78 M44 52 Q36 60 28 66" stroke="rgba(110,140,170,.5)" stroke-width=".9" fill="none"/>
-  </g>
-  <g class="wing wr">
-    <ellipse cx="63" cy="61" rx="11" ry="24" transform="rotate(-26 63 61)"
-             fill="rgba(214,236,255,.58)" stroke="rgba(110,140,170,.75)" stroke-width="1"/>
-    <path d="M53 46 Q62 58 70 78 M56 52 Q64 60 72 66" stroke="rgba(110,140,170,.5)" stroke-width=".9" fill="none"/>
-  </g>
-</svg>`;
 
-  const BEE_SVG = `
-<svg viewBox="0 0 100 100" aria-hidden="true">
-  <g stroke="#2B2B33" stroke-width="2.2" stroke-linecap="round" fill="none">
-    <path d="M44 42 L34 38"/><path d="M56 42 L66 38"/>
-    <path d="M43 48 L32 51"/><path d="M57 48 L68 51"/>
-    <path d="M44 53 L36 60"/><path d="M56 53 L64 60"/>
-  </g>
-  <ellipse cx="50" cy="62" rx="15" ry="20" fill="#FFC93C"/>
-  <path d="M35.8 55 Q50 58.5 64.2 55 L64.4 59 Q50 62.5 35.6 59 Z" fill="#2B2B33"/>
-  <path d="M35.4 65 Q50 68.5 64.6 65 L64 69 Q50 72.5 36 69 Z" fill="#2B2B33"/>
-  <path d="M38.5 74 Q50 77 61.5 74 L59.5 77.5 Q50 80.5 40.5 77.5 Z" fill="#2B2B33"/>
-  <path d="M47.5 81 L50 86.5 L52.5 81 Z" fill="#2B2B33"/>
-  <circle cx="50" cy="41" r="11" fill="#5A4030"/>
-  <circle cx="50" cy="41" r="11" fill="none" stroke="#FFC93C" stroke-width="1.6" stroke-dasharray="2 3" opacity=".7"/>
-  <circle cx="50" cy="27" r="9" fill="#2B2B33"/>
-  <circle cx="45.2" cy="24.6" r="2.3" fill="#fff" opacity=".9"/>
-  <circle cx="54.8" cy="24.6" r="2.3" fill="#fff" opacity=".9"/>
-  <path d="M46 19.5 Q42.5 12 37.5 10.5" stroke="#2B2B33" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <path d="M54 19.5 Q57.5 12 62.5 10.5" stroke="#2B2B33" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <circle cx="37" cy="10.5" r="2.3" fill="#2B2B33"/><circle cx="63" cy="10.5" r="2.3" fill="#2B2B33"/>
-  <g class="wing wl">
-    <ellipse cx="33" cy="44" rx="16" ry="9.5" transform="rotate(-24 33 44)"
-             fill="rgba(236,246,255,.78)" stroke="rgba(110,140,170,.7)" stroke-width="1"/>
-  </g>
-  <g class="wing wr">
-    <ellipse cx="67" cy="44" rx="16" ry="9.5" transform="rotate(24 67 44)"
-             fill="rgba(236,246,255,.78)" stroke="rgba(110,140,170,.7)" stroke-width="1"/>
-  </g>
-</svg>`;
 
   const NET_SVG = `
 <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -178,14 +125,6 @@
     sip: [5.5, 6.5],   // about 6 seconds on the flower
   };
   const FLY_LIFE = [25, 25];   // safety cap; flies normally leave after 3-4 rests
-  const PETALS = ["#FF7AA8", "#B98CF0", "#FF9E5E", "#FF6B8A"];
-  const flowerSVG = c => `<svg viewBox="0 0 100 120" aria-hidden="true">
-    <path d="M50 58 Q47 88 50 118" stroke="#3F9B53" stroke-width="6" fill="none" stroke-linecap="round"/>
-    <path d="M50 92 Q66 78 78 84 Q67 99 50 97 Z" fill="#5FBF5A"/>
-    ${[0, 60, 120, 180, 240, 300].map(a => `<ellipse cx="50" cy="26" rx="11" ry="16" fill="${c}" transform="rotate(${a} 50 45)"/>`).join("")}
-    <circle cx="50" cy="45" r="12" fill="#FFC93C"/>
-    <circle cx="46" cy="41" r="3.2" fill="#fff" opacity=".55"/>
-  </svg>`;
   const sizePts = sc => clamp(1 / sc, .85, 1.45);   // smaller fly is harder, so more points
   let MODE = "kids", bfPick = false;
   const isCh = () => MODE === "challenge";
@@ -198,6 +137,7 @@
   const starsEl = $("stars"), lvNum = $("lvNum"), banner = $("banner");
   const startScreen = $("startScreen"), endScreen = $("endScreen");
   const muteBtn = $("mute");
+  const stage = new Stage($("stage"));
   $("heroFly").innerHTML = FLY_SVG;
   const ICONS = { fly: FLY_SVG, bee: BEE_SVG, download: DOWNLOAD_SVG, refresh: REFRESH_SVG, trophy: TROPHY_SVG, gift: GIFT_SVG };
   document.querySelectorAll("[data-ico]").forEach(e => { if (ICONS[e.dataset.ico]) e.innerHTML = ICONS[e.dataset.ico]; });
@@ -218,9 +158,16 @@
     if (isCh()) NET_R = Math.max(40, NET_R * CH.net);
     TOP_PAD = hud.getBoundingClientRect().height + 12;   // includes CSS zoom on large screens
     glass.style.setProperty("--fly", S + "px");
+    stage.resize(W, H); prepareArt();
     bfMeasure(); bfLayout(); antMeasure();
     sizeNet(cursorNet);
     fitCards();
+  }
+  // Pictures for this mode's flies, bees and flowers, made ahead at the size they'll be drawn
+  function prepareArt() {
+    const d = stage.dpr, pool = SIZES[MODE] || [];
+    wantFliers([...pool.map(sc => ["fly", S * sc * d]), ...(MODE === "bees" ? pool.map(sc => ["bee", S * sc * d]) : [])]);
+    if (MODE === "bees") wantFlowers(PETALS, S * 1.45 * d, d);
   }
   function bounds(h = S * 0.5) {
     return { minX: h + 6, maxX: W - h - 6, minY: TOP_PAD + h * 0.4, maxY: H - h - 6 };
@@ -445,14 +392,9 @@
 
   // ================= Flies =================
   function spawnFly(kind = "fly") {
-    const el = document.createElement("div");
-    el.className = "fly flying" + (kind === "bee" ? " bee" : "");
-    el.innerHTML = `<div class="body">${kind === "bee" ? BEE_SVG : FLY_SVG}</div><div class="dizzy"><i></i><i></i><i></i></div>`;
     const pool = SIZES[MODE];
     const sc = pool[Math.floor(Math.random() * pool.length)];
     const Z = S * sc;
-    el.style.setProperty("--fly", Z + "px");
-    layer.appendChild(el);
 
     const flower = kind === "bee" ? plantFlower() : null;
     let edge = Math.floor(Math.random() * 4);
@@ -471,7 +413,7 @@
     const k = rand(.85, 1.15);
 
     flies.push({
-      el, body: el.firstElementChild, x, y, heading, target: heading,
+      x, y, heading, target: heading, flying: true, top: false, caughtAt: -1, dodgeAt: -1, dizzyAt: -1,
       spdK: k, speed: baseSpeed() * k, turn: rand(.6, 1.2),
       state: "fly", rest: 0, tw: 0, rotTarget: 0, entered: false,
       rot: heading * 180 / Math.PI + 90, t: 0, wob: rand(0, 6.28),
@@ -486,7 +428,6 @@
   function step(dt) {
     for (const f of flies) {
       const Z = S * f.sc, b = bounds(Z * .5);
-      if (f.z !== Z) { f.z = Z; f.el.style.setProperty("--fly", Z + "px"); }
       f.t += dt;
       if (f.bump > 0) f.bump -= dt;
       if (f.entered && isAlive(f)) {
@@ -531,7 +472,7 @@
           if (f.y > b.maxY) { f.y = b.maxY; f.heading = -f.heading; f.target = f.heading; }
           if (!isBee(f) && Math.random() < dt * restChance()) {   // bees only rest on flowers
             f.state = "rest"; f.rest = rand(...LV().restDur) * (isCh() ? CH.restDur : 1); f.tw = 0; f.rotTarget = f.rot;
-            f.el.classList.remove("flying");
+            f.flying = false;
           }
         }
         f.rot = lerpDeg(f.rot, hd * 180 / Math.PI + 90, clamp(dt * 10, 0, 1));
@@ -545,7 +486,7 @@
           f.x += (tx - f.x) * k;
           f.y += (ty - f.y) * k;
           if (!f.landed && Math.hypot(tx - f.x, ty - f.y) < 4) {
-            f.landed = true; f.el.classList.remove("flying");   // landed: fold wings
+            f.landed = true; f.flying = false;   // landed: fold wings
           }
         }
         if (f.tw <= 0) { f.tw = rand(.35, .8); f.rotTarget = f.rot + rand(-14, 14); }
@@ -555,7 +496,7 @@
           else if (MODE === "bees" && !isBee(f) && --f.restsLeft <= 0) {
             f.leftNat = true; leave(f, 1.3);   // rested 3-4 times: leave
           } else {
-            f.state = "fly"; f.el.classList.add("flying");
+            f.state = "fly"; f.flying = true;
             f.heading = f.target = rand(0, Math.PI * 2); f.turn = rand(.3, .8);
           }
         }
@@ -576,13 +517,11 @@
         if (f.x < -Z * 2 || f.x > W + Z * 2 || f.y < -Z * 2 || f.y > H + Z * 2) f.dead = true;
       }
 
-      f.el.style.transform = `translate3d(${f.x + f.xOff - Z / 2}px,${f.y - Z / 2}px,0)`;
-      f.body.style.transform = `rotate(${f.rot}deg)`;
     }
     collide();
     if (flies.some(f => f.dead)) {
       const refill = flies.some(f => f.dead && (isBee(f) || f.leftNat));
-      flies = flies.filter(f => { if (f.dead) { f.el.remove(); if (f.voice) f.voice.stop(); } return !f.dead; });
+      flies = flies.filter(f => { if (f.dead && f.voice) f.voice.stop(); return !f.dead; });
       if (refill && running) fill();   // freed slot for a new fly or bee
     }
   }
@@ -608,11 +547,12 @@
   function bounce(f, away) {
     f.heading = f.target = away + rand(-.45, .45);
     f.turn = rand(.5, .9); f.bump = .45;
-    if (f.state === "rest") { f.state = "fly"; f.el.classList.add("flying"); }   // a resting one takes off
+    if (f.state === "rest") { f.state = "fly"; f.flying = true; }   // a resting one takes off
   }
 
   // Bee flowers
   const flora = $("flora");
+  let beeFlowers = [];
   function plantFlower() {
     const F = S * 1.45;
     let x, base, tries = 0;
@@ -620,20 +560,13 @@
       x = rand(W * .12, W * .88);
       base = rand(H * .86, H * .98);   // root in the green ground strip
     } while (++tries < 12 && flies.some(f => f.flower && Math.abs(f.flower.x - x) < F * 1.1));
-    const y = base - F * .75;   // flower center
-    const el = document.createElement("div");
-    el.className = "bflower";
-    el.innerHTML = flowerSVG(PETALS[Math.floor(Math.random() * PETALS.length)]);
-    el.style.width = F + "px"; el.style.height = F * 1.2 + "px";
-    el.style.left = (x - F / 2) + "px"; el.style.top = (base - F * 1.2) + "px";
-    flora.appendChild(el);
+    const fl = { x, y: base - F * .75, base, F, c: PETALS[Math.floor(Math.random() * PETALS.length)], t: 0, wiltAt: -1 };
+    beeFlowers.push(fl);
     sfx.bloom();
-    return { x, y, el };
+    return fl;
   }
   function wiltFlower(fl) {
-    if (!fl) return;
-    fl.el.classList.add("wilt");
-    setTimeout(() => fl.el.remove(), 650);
+    if (fl && fl.wiltAt < 0) fl.wiltAt = fl.t;
   }
   function beeDone(f) {
     f.sip = false; f.phase = "done";
@@ -646,7 +579,7 @@
     const Z = S * f.sc;
     const dl = f.x, dr = W - f.x, dtp = f.y, db = H - f.y, m = Math.min(dl, dr, dtp, db);
     f.heading = (m === dl ? Math.PI : m === dr ? 0 : m === dtp ? -Math.PI / 2 : Math.PI / 2) + rand(-.3, .3);
-    f.state = "exit"; f.exitK = k; f.el.classList.add("flying");
+    f.state = "exit"; f.exitK = k; f.flying = true;
   }
   // Visual alert for hitting a bee
   const ALERT_SVG = `<svg viewBox="0 0 100 100" aria-hidden="true">
@@ -674,7 +607,7 @@
     f.sip = false; f.phase = "done";
     wiltFlower(f.flower); f.flower = null;
     f.heading = Math.atan2(f.y - py, f.x - px) + rand(-.25, .25);
-    f.state = "exit"; f.exitK = 3.2; f.el.classList.add("flying", "dodge");
+    f.state = "exit"; f.exitK = 3.2; f.flying = true; f.dodgeAt = f.t;
   }
 
   // ================= Butterfly garden =================
@@ -1575,16 +1508,13 @@
 
   function catchFly(f) {
     f.state = "caught";
-    f.el.classList.remove("flying");
-    f.el.classList.add("caught");
-    f.el.style.zIndex = 3;
+    f.flying = false; f.caughtAt = f.t; f.top = true;
     burst(f.x, f.y, S * f.sc);
     const g = gen;
     setTimeout(() => {
       if (g !== gen) return;
       f.state = "slide"; f.vy = 18; f.slideT = 0;
-      f.el.classList.remove("caught");
-      f.el.classList.add("dizzy-on");
+      f.dizzyAt = f.t;
       sfx.squeak();
     }, 480);
   }
@@ -1673,7 +1603,7 @@
       const dl = f.x, dr = W - f.x, dt = f.y, db = H - f.y, m = Math.min(dl, dr, dt, db);
       f.heading = m === dl ? Math.PI : m === dr ? 0 : m === dt ? -Math.PI / 2 : Math.PI / 2;
       f.heading += rand(-.3, .3);
-      f.state = "exit"; f.el.classList.add("flying");
+      f.state = "exit"; f.flying = true;
     }
     if (isCh()) {
       const bonus = done ? Math.round(timeLeft) * TIME_PTS : 0;
@@ -1741,8 +1671,8 @@
     sfx.init();
     clearTimeout(endTimer);
     gen++;
-    flies.forEach(f => { f.el.remove(); if (f.voice) f.voice.stop(); });
-    flies = []; pending = 0;
+    flies.forEach(f => { if (f.voice) f.voice.stop(); });
+    flies = []; pending = 0; beeFlowers = [];
     flora.innerHTML = ""; bfClear(); antClear();
     level = 0; caughtInLevel = 0;
     gameOver = false; running = true; paused = false; resumeQueue = [];
@@ -2104,8 +2034,8 @@
     glass.classList.remove("paused");
     $("pauseScreen").classList.remove("show");
     gen++; pending = 0;
-    flies.forEach(f => { f.el.remove(); if (f.voice) f.voice.stop(); });
-    flies = []; flora.innerHTML = ""; bfClear(); antClear();
+    flies.forEach(f => { if (f.voice) f.voice.stop(); });
+    flies = []; beeFlowers = []; flora.innerHTML = ""; bfClear(); antClear();
     running = false; gameOver = true;
     document.body.classList.remove("playing");
     syncCursor(); goStart();
@@ -2193,12 +2123,11 @@
   const sunEl = document.querySelector(".sun"), cloudEls = [...document.querySelectorAll(".cloud")];
   const haloEl = $("halo"), shadeEl = $("shade"), streaksEl = document.querySelector(".streaks");
   const CLOUD_PX_S = [28, 20];   // fixed px/s; the first crosses the sun, the second is slower for depth
+  const CLOUD_START = [20, 70];   // seconds already drifted when the page opens, so they start apart
   const DIM_MAX = .22;   // max scenery dimming (~20%)
+  let cloudW = [], cloudX = [0, 0], cloudT = 0;
   function tuneClouds() {
-    cloudEls.forEach((c, i) => {
-      const w = c.offsetWidth;   // travel = screen width + 1.2x cloud width
-      c.style.animationDuration = ((innerWidth + w * 1.2) / CLOUD_PX_S[i]).toFixed(1) + "s";
-    });
+    cloudW = cloudEls.map(c => c.offsetWidth);
     const sr = sunEl.getBoundingClientRect(), gr = glass.getBoundingClientRect(), d = sr.width * 3.2;
     haloEl.style.width = haloEl.style.height = d + "px";
     haloEl.style.transform = `translate(${sr.left - gr.left + sr.width / 2 - d / 2}px,${sr.top - gr.top + sr.height / 2 - d / 2}px)`;
@@ -2217,10 +2146,13 @@
     const rr = s.h / 2, qx = clamp(px, s.x + rr, s.x + s.w - rr);
     return (px - qx) ** 2 + (py - (s.y + rr)) ** 2 <= rr * rr;
   }
-  let dimNow = -1;
+  let dimNow = -1, sha = .28;
   function sunCover() {   // fraction of the sun disc covered (0 to 1)
     const sr = sunEl.getBoundingClientRect(), R = sr.width / 2, cx = sr.left + R, cy = sr.top + R;
-    const sh = cloudEls.flatMap(c => cloudShapes(c.getBoundingClientRect()));
+    const sh = cloudEls.flatMap((c, i) => {
+      const r = c.getBoundingClientRect();
+      return cloudShapes({ left: r.left + cloudX[i], top: r.top, width: r.width, height: r.height });
+    });
     let tot = 0, hit = 0; const N = 10;
     for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
       const px = cx - R + (i + .5) * 2 * R / N, py = cy - R + (j + .5) * 2 * R / N;
@@ -2228,6 +2160,17 @@
       tot++; if (sh.some(s => inShape(px, py, s))) hit++;
     }
     return tot ? hit / tot : 0;
+  }
+  // Moved from the main loop, not a CSS animation, which Chrome ran on the main thread with a style pass every frame.
+  // Only each cloud's picture moves; its box stays put and keeps the size from the CSS.
+  // Each crosses from just off the left edge to just off the right one (window width + 1.2x its width), then comes round
+  function moveClouds(dt) {
+    cloudT += dt;
+    cloudEls.forEach((c, i) => {
+      const w = cloudW[i], pic = c.firstElementChild;
+      cloudX[i] = -1.1 * w + ((cloudT + CLOUD_START[i]) * CLOUD_PX_S[i]) % (innerWidth + w * 1.2);
+      if (pic) pic.style.transform = `translate3d(${cloudX[i].toFixed(2)}px,0,0)`;
+    });
   }
   function updateLight() {
     const root = document.documentElement;
@@ -2239,12 +2182,35 @@
     shadeEl.style.opacity = (k * DIM_MAX).toFixed(3);
     haloEl.style.opacity = (1 - k * .8).toFixed(3);
     streaksEl.style.opacity = (1 - k * .5).toFixed(3);
-    glass.style.setProperty("--sha", (.28 - k * .13).toFixed(3));
+    sha = .28 - k * .13;
+    glass.style.setProperty("--sha", sha.toFixed(3));
   }
   tuneClouds();
   addEventListener("resize", tuneClouds);
+  // A new mode or theme fades the hills' colours over 1.2s (the body transition), so the scenery is redrawn every frame while it does
+  let bakeUntil = 0, baking = false;
+  const bake = (ms = 0) => {
+    bakeUntil = Math.max(bakeUntil, performance.now() + ms);
+    if (baking) return;
+    baking = true;
+    requestAnimationFrame(function go() {
+      bakeScenery(glass);
+      if (performance.now() < bakeUntil) requestAnimationFrame(go); else baking = false;
+    });
+  };
+  bake();
+  addEventListener("resize", () => bake());
+  watchColours(() => bake(1300));
 
   // ================= Main loop =================
+  function drawStage() {
+    if (!stage.begin(flies.length > 0 || beeFlowers.length > 0)) return;
+    const x = stage.x, d = stage.dpr;
+    for (const fl of beeFlowers) drawBeeFlower(x, fl);
+    for (const f of flies) if (!f.top) drawFlier(x, f, S * f.sc, sha, d);
+    for (const f of flies) if (f.top) drawFlier(x, f, S * f.sc, sha, d);   // a caught fly stays in front
+  }
+  if (dev) window.__fc = { flies: () => flies, bugs: () => bugs, ants: () => ants, glass };
   let last = 0, lastLight = 0;
   const FLY_BUZZ = .024;   // single fly volume
   const BEE_BUZZ = .0113;   // tuned 25% clearer than one fly
@@ -2266,7 +2232,10 @@
     if (!paused && !document.hidden && flies.length) step(dt);
     if (!paused && !document.hidden && (bugs.length || bfFlowers.length)) bfStep(dt);
     if (!paused && !document.hidden && MODE === "ants" && (running || ants.length)) antStep(dt);
+    if (!paused && !document.hidden) { moveClouds(dt); for (const fl of beeFlowers) fl.t += dt; }
+    if (beeFlowers.some(flowerGone)) beeFlowers = beeFlowers.filter(fl => !flowerGone(fl));
     if (t - lastLight > 100) { lastLight = t; updateLight(); }   // 10 times a second is enough
+    if (!document.hidden && (!paused || stage.dirty)) drawStage();
     // Per insect: pan follows position, bigger ones slightly louder
     for (const f of flies) {
       if (!f.voice) continue;

@@ -1,0 +1,89 @@
+[
+ {
+  "name": "menu",
+  "settle": 2,
+  "dur": 0,
+  "shot": "smoke-menu.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "kids",
+  "js": "document.getElementById('startBtn').click()",
+  "settle": 3,
+  "dur": 0,
+  "shot": "smoke-kids.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "catch a fly",
+  "js": "(()=>{const f=__fc.flies().find(f=>(f.state==='fly'||f.state==='rest')&&f.kind==='fly');if(!f)return;const r=__fc.glass.getBoundingClientRect();__fc.glass.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:r.x+f.x,clientY:r.y+f.y,pointerType:'touch'}))})()",
+  "settle": 1,
+  "dur": 0,
+  "shot": "smoke-catch.png",
+  "info": "'stars '+document.querySelectorAll('#stars .on').length+' '+(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "pause",
+  "js": "document.getElementById('pauseBtn').click()",
+  "settle": 1,
+  "dur": 0,
+  "shot": "smoke-pause.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "resume",
+  "js": "document.getElementById('resumeBtn').click()",
+  "settle": 1,
+  "dur": 0,
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "bees",
+  "js": "document.getElementById('beesBtn').click()",
+  "settle": 5,
+  "dur": 0,
+  "shot": "smoke-bees.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "challenge",
+  "js": "document.getElementById('chAgain').click()",
+  "settle": 4,
+  "dur": 0,
+  "shot": "smoke-challenge.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "butterflies",
+  "js": "document.getElementById('bfBtn').click()",
+  "settle": 5,
+  "dur": 0,
+  "shot": "smoke-butterflies.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "ants",
+  "js": "document.getElementById('antBtn').click()",
+  "settle": 5,
+  "dur": 0,
+  "shot": "smoke-ants.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "dark kids",
+  "dark": true,
+  "js": "document.getElementById('startBtn').click()",
+  "settle": 3,
+  "dur": 0,
+  "shot": "smoke-dark.png",
+  "info": "(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ },
+ {
+  "name": "quit to menu",
+  "dark": false,
+  "js": "document.getElementById('pauseBtn').click();setTimeout(()=>document.getElementById('quitBtn').click(),300)",
+  "settle": 2,
+  "dur": 0,
+  "info": "'menu shown '+document.getElementById('startScreen').classList.contains('show')+' '+(window.__fc?'flies '+__fc.flies().length+' bugs '+__fc.bugs().length+' ants '+__fc.ants().length:'')+' errors '+JSON.stringify(__errs)"
+ }
+]

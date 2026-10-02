@@ -1,0 +1,48 @@
+[
+ {
+  "name": "warmup",
+  "settle": 3,
+  "dur": 3
+ },
+ {
+  "name": "menu",
+  "settle": 2,
+  "dur": 8
+ },
+ {
+  "name": "kids level 1",
+  "js": "document.getElementById('startBtn').click()",
+  "settle": 4,
+  "dur": 8
+ },
+ {
+  "name": "paused",
+  "js": "document.getElementById('pauseBtn').click()",
+  "settle": 2,
+  "dur": 6
+ },
+ {
+  "name": "bees",
+  "js": "document.getElementById('resumeBtn').click();document.getElementById('beesBtn').click()",
+  "settle": 6,
+  "dur": 8
+ },
+ {
+  "name": "challenge",
+  "js": "document.getElementById('chAgain').click()",
+  "settle": 4,
+  "dur": 8
+ },
+ {
+  "name": "butterflies",
+  "js": "document.getElementById('bfBtn').click()",
+  "settle": 6,
+  "dur": 8
+ },
+ {
+  "name": "ants",
+  "js": "document.getElementById('antBtn').click()",
+  "settle": 6,
+  "dur": 8
+ }
+]
